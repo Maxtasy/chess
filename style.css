@@ -1,0 +1,105 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000000; 
+}
+
+.grid-container {
+    box-sizing: initial;
+    width: 800px;
+    height: 800px;
+    background-color: grey;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    border: 2px solid grey;
+}
+
+.cell {
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+}
+
+.cell.dark {
+    background-color: #457b9d;
+}
+
+.cell.light {
+    background-color: #f1faee;
+}
+
+.cell.highlight {
+    background-color: red;
+}
+
+.cell.active {
+    background-color: green;
+}
+
+[data-piece="pawn light"] {
+    background-image: url("img/pawn_light.png");
+    background-size: cover;
+}
+
+[data-piece="pawn dark"] {
+    background-image: url("img/pawn_dark.png");
+    background-size: cover;
+}
+
+[data-piece="rook light"] {
+    background-image: url("img/rook_light.png");
+    background-size: cover;
+}
+
+[data-piece="rook dark"] {
+    background-image: url("img/rook_dark.png");
+    background-size: cover;
+}
+
+[data-piece="knight light"] {
+    background-image: url("img/knight_light.png");
+    background-size: cover;
+}
+
+[data-piece="knight dark"] {
+    background-image: url("img/knight_dark.png");
+    background-size: cover;
+}
+
+[data-piece="bishop light"] {
+    background-image: url("img/bishop_light.png");
+    background-size: cover;
+}
+
+[data-piece="bishop dark"] {
+    background-image: url("img/bishop_dark.png");
+    background-size: cover;
+}
+
+[data-piece="queen light"] {
+    background-image: url("img/queen_light.png");
+    background-size: cover;
+}
+
+[data-piece="queen dark"] {
+    background-image: url("img/queen_dark.png");
+    background-size: cover;
+}
+
+[data-piece="king dark"] {
+    background-image: url("img/king_dark.png");
+    background-size: cover;
+}
+
+[data-piece="king light"] {
+    background-image: url("img/king_light.png");
+    background-size: cover;
+}
