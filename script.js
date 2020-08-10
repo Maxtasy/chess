@@ -2,6 +2,9 @@ const gridContainer = document.querySelector(".grid-container");
 
 let ACTIVE_CELL = null;
 let VALID_CELLS = null;
+let CURRENT_PLAYER = "light";
+let CHECK = false;
+let CHECKMATE = false;
 
 const players = {
     light: {
@@ -97,6 +100,7 @@ function getValidCells(cell) {
 
     const validCells = [];
 
+    // Light Pawn
     if (activePieceType === "pawn" && activePieceColor === "light") {
         // Two forward from initial board position
         if (currentRow === 2 && !pieceOn(currentRow + 2, currentCol) && !pieceBetween(cell, document.querySelector(`[data-row='${currentRow + 2}'][data-col='${currentCol}']`))) {
@@ -104,50 +108,419 @@ function getValidCells(cell) {
         }
         // One forward from initial board position
         const cellTop = document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol}']`);
-        if (cellTop && !cellTop.dataset.piece)
-        validCells.push(document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol}']`))
+        if (cellTop && !cellTop.dataset.piece) {
+            validCells.push(document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol}']`))
+        }
         // Take piece diagonally left
-        const cellTopLeft = document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol - 1}']`);
-        if (cellTopLeft && cellTopLeft.dataset.piece && cellTopLeft.dataset.piece.includes("dark")) {
-            validCells.push(cellTopLeft);
+        const cellDiagLeft = document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol - 1}']`);
+        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.piece.includes("dark")) {
+            validCells.push(cellDiagLeft);
         }
         // Take piece diagonally right
-        const cellTopRight = document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol + 1}']`);
-        if (cellTopRight && cellTopRight.dataset.piece && cellTopRight.dataset.piece.includes("dark")) {
-            validCells.push(cellTopRight);
+        const cellDiagRight = document.querySelector(`[data-row='${currentRow + 1}'][data-col='${currentCol + 1}']`);
+        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.piece.includes("dark")) {
+            validCells.push(cellDiagRight);
         }
         // En Passant diagonally left
         const cellLeft = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol - 1}']`);
         if (players.dark.enPassantPossible && cellLeft && cellLeft.dataset.piece && cellLeft.dataset.piece === "pawn dark") {
-            validCells.push(cellTopLeft);
+            validCells.push(cellDiagLeft);
         }
+        // En Passant diagonally right
+        const cellRight = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol + 1}']`);
+        if (players.dark.enPassantPossible && cellRight && cellRight.dataset.piece && cellRight.dataset.piece === "pawn dark") {
+            validCells.push(cellDiagRight);
+        }
+    // Dark Pawn
     } else if (activePieceType === "pawn" && activePieceColor === "dark") {
+        // Two forward from initial board position
         if (currentRow === 7 && !pieceOn(currentRow - 2, currentCol) && !pieceBetween(cell, document.querySelector(`[data-row='${currentRow - 2}'][data-col='${currentCol}']`))) {
             validCells.push(document.querySelector(`[data-row='${currentRow - 2}'][data-col='${currentCol}']`))
         }
-        if (!document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol}']`).dataset.piece)
-        validCells.push(document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol}']`))
-    } 
+        // One forward from initial board position
+        const cellTop = document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol}']`);
+        if (cellTop && !cellTop.dataset.piece) {
+            validCells.push(document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol}']`))
+        }
+        // Take piece diagonally left
+        const cellDiagLeft = document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol - 1}']`);
+        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.piece.includes("dark")) {
+            validCells.push(cellDiagLeft);
+        }
+        // Take piece diagonally right
+        const cellDiagRight = document.querySelector(`[data-row='${currentRow - 1}'][data-col='${currentCol + 1}']`);
+        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.piece.includes("dark")) {
+            validCells.push(cellDiagRight);
+        }
+        // En Passant diagonally left
+        const cellLeft = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol - 1}']`);
+        if (players.light.enPassantPossible && cellLeft && cellLeft.dataset.piece && cellLeft.dataset.piece === "pawn light") {
+            validCells.push(cellDiagLeft);
+        }
+        // En Passant diagonally right
+        const cellRight = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol + 1}']`);
+        if (players.light.enPassantPossible && cellRight && cellRight.dataset.piece && cellRight.dataset.piece === "pawn light") {
+            validCells.push(cellDiagRight);
+        }
+    // Knights
+    } else if (activePieceType === "knight") {
+        const movePattern = [[2, -1], [2, 1], [1, -2], [1, 2], [-1, -2], [-1, 2], [-2, -1],  [-2, 1]];
+        movePattern.forEach(move => {
+            const possibleCell = document.querySelector(`[data-row='${currentRow + move[0]}'][data-col='${currentCol + move[1]}']`);
+            
+            if (possibleCell && (!possibleCell.dataset.piece || possibleCell.dataset.piece.split(" ")[1] !== activePieceColor)) {
+                validCells.push(possibleCell);
+            }
+        });
+    // Bishops
+    } else if (activePieceType === "bishop") {
+        let diagTopLeftEnd = false;
+        let diagTopRightEnd = false;
+        let diagBotLeftEnd = false;
+        let diagBotRightEnd = false;
+
+        for (let i = 1; i < 8; i++) {
+            if (diagTopRightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagTopRightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagTopRightEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagBotLeftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagBotLeftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagBotLeftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagTopLeftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagTopLeftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagTopLeftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagBotRightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagBotRightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagBotRightEnd = true;
+                }
+            }
+        }
+    // Rooks
+    } else if (activePieceType === "rook") {
+        let leftEnd = false;
+        let rightEnd = false;
+        let topEnd = false;
+        let botEnd = false;
+        
+        for (let i = 1; i < 8; i++) {
+            if (leftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    leftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    leftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (rightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    rightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    rightEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (topEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    topEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    topEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (botEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    botEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    botEnd = true;
+                }
+            }
+        }
+    // Queens
+    } else if (activePieceType === "queen") {
+        let diagTopLeftEnd = false;
+        let diagTopRightEnd = false;
+        let diagBotLeftEnd = false;
+        let diagBotRightEnd = false;
+        let leftEnd = false;
+        let rightEnd = false;
+        let topEnd = false;
+        let botEnd = false;
+
+        for (let i = 1; i < 8; i++) {
+            if (diagTopRightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagTopRightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagTopRightEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagBotLeftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagBotLeftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagBotLeftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagTopLeftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagTopLeftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagTopLeftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (diagBotRightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    diagBotRightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    diagBotRightEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (leftEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol - i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    leftEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    leftEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (rightEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol + i}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    rightEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    rightEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (topEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow + i}'][data-col='${currentCol}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    topEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    topEnd = true;
+                }
+            }
+        }
+        
+        for (let i = 1; i < 8; i++) {
+            if (botEnd) break;
+
+            const possibleCell = document.querySelector(`[data-row='${currentRow - i}'][data-col='${currentCol}']`);
+
+            if (possibleCell) {
+                if (!possibleCell.dataset.piece) {
+                    validCells.push(possibleCell);
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] !== activePieceColor) {
+                    validCells.push(possibleCell);
+                    botEnd = true;
+                } else if (possibleCell.dataset.piece && possibleCell.dataset.piece.split(" ")[1] === activePieceColor) {
+                    botEnd = true;
+                }
+            }
+        }
+    // Kings
+    } else if (activePieceType === "king") {
+        const movePattern = [[1, -1], [1, 0], [1, 1], [0, -1], [0, 1], [-1, -1], [-1, 0], [-1, 1]];
+        movePattern.forEach(move => {
+            const possibleCell = document.querySelector(`[data-row='${currentRow + move[0]}'][data-col='${currentCol + move[1]}']`);
+            
+            if (possibleCell && (!possibleCell.dataset.piece || possibleCell.dataset.piece.split(" ")[1] !== activePieceColor)) {
+                validCells.push(possibleCell);
+            }
+        });
+    }
 
     return validCells;
 }
 
 function movePieceToNewDestination(cell) {
-    const piece = ACTIVE_CELL.dataset.piece;
+    const activePieceType = ACTIVE_CELL.dataset.piece.split(" ")[0];
+    const activePieceColor = ACTIVE_CELL.dataset.piece.split(" ")[1];
+    const currentRow = parseInt(ACTIVE_CELL.dataset.row);
+    const currentCol = parseInt(ACTIVE_CELL.dataset.col);
+    const destinationRow = parseInt(cell.dataset.row);
+    const destinationCol = parseInt(cell.dataset.col);
 
-    if (piece === "pawn light" && parseInt(cell.dataset.row) === 8) {
+    // TODO: Give player selection of pieces to promote to
+    // Promote pawn to queen
+    if (activePieceType === "pawn" && activePieceColor === "light" && destinationRow === 8) {
         cell.setAttribute("data-piece", "queen light");
-    } else if (piece === "pawn dark" && parseInt(cell.dataset.row) === 1) {
+    } else if (activePieceType === "pawn" && activePieceColor === "dark" && destinationRow === 1) {
         cell.setAttribute("data-piece", "queen dark");
-    // En Passant
-    } else if (piece === "pawn light" && parseInt(ACTIVE_CELL.dataset.row) === 2 && parseInt(cell.dataset.row) === 4) {
+    // Enable En Passant if pawn moves 2 cells forward
+    } else if (activePieceType === "pawn" && activePieceColor === "light" && currentRow === 2 && destinationRow === 4) {
         players.light.enPassantPossible = true;
-        cell.setAttribute("data-piece", piece);
-    } else if (piece === "pawn dark" && parseInt(ACTIVE_CELL.dataset.row) === 7 && parseInt(cell.dataset.row) === 5) {
+        cell.setAttribute("data-piece", `${activePieceType} ${activePieceColor}`);
+    } else if (activePieceType === "pawn" && activePieceColor === "dark" && currentRow === 7 && destinationRow === 5) {
         players.dark.enPassantPossible = true;
-        cell.setAttribute("data-piece", piece);
+        cell.setAttribute("data-piece", `${activePieceType} ${activePieceColor}`);
+    // Light moved En Passant
+    } else if (activePieceType === "pawn" && activePieceColor === "light" &&
+                players.dark.enPassantPossible &&
+                currentRow === 5 &&
+                destinationCol === 6 &&
+                (currentCol - 1 === destinationCol || currentCol + 1 === destinationCol))
+    {
+        cell.setAttribute("data-piece", `${activePieceType} ${activePieceColor}`);
+        document.querySelector(`[data-row='${currentRow}'][data-col='${destinationCol}']`).removeAttribute("data-piece");
+    // Dark moved En Passant
+    } else if (activePieceType === "pawn" && activePieceColor === "dark" &&
+                players.light.enPassantPossible &&
+                currentRow === 4 &&
+                destinationCol === 3 &&
+                (currentCol - 1 === parseInt(cell.dataset.col) || currentCol + 1 === destinationCol)) {
+        cell.setAttribute("data-piece", `${activePieceType} ${activePieceColor}`);
+        document.querySelector(`[data-row='${currentRow}'][data-col='${destinationCol}']`).removeAttribute("data-piece");
     } else {
-        cell.setAttribute("data-piece", piece);
+        cell.setAttribute("data-piece", `${activePieceType} ${activePieceColor}`);
     }
 
     ACTIVE_CELL.classList.remove("active", "highlight");
