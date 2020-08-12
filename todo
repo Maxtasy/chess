@@ -1,1 +1,4 @@
-- Disable en pessant for player on move start
+- Repetition
+- Pick piece when promoting (Add overlay with position absolute and disable any other clicks)
+- Stalemate condition
+- Highlight last move
