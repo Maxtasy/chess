@@ -1,4 +1,4 @@
-- Repetition
 - Pick piece when promoting (Add overlay with position absolute and disable any other clicks)
-- Stalemate condition
+- Stalemate condition (not enough pieces, threefold repetition)
 - Highlight last move
+- on checkmate disable board

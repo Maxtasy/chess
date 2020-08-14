@@ -26,8 +26,8 @@ const players = {
 }
 
 function clearHighlightedCells() {
-        document.querySelectorAll(".take-overlay").forEach(overlay => {overlay.style.display = "none"});
-        document.querySelectorAll(".move-overlay").forEach(overlay => {overlay.style.display = "none"});
+    document.querySelectorAll(".take-overlay").forEach(overlay => {overlay.style.display = "none"});
+    document.querySelectorAll(".move-overlay").forEach(overlay => {overlay.style.display = "none"});
 }
 
 function setActiveCell(cell) {
@@ -326,59 +326,59 @@ function getValidDestinations(cell) {
     if (cellPiece === "pawn" && cellColor === "light") {
         // One forward from initial board position
         const cellTop = document.querySelector(`[data-row='${cellRow + 1}'][data-col='${cellCol}']`);
-        if (cellTop && !cellTop.dataset.piece) {
+        if (cellTop && !cellTop.dataset.piece && !selfCheckAfterMove(cell, cellTop)) {
             validDestinations.push(cellTop);
         }
         // Two forward from initial board position
         const cellTopTop = document.querySelector(`[data-row='${cellRow + 2}'][data-col='${cellCol}']`);
-        if (cellRow === 2 && !cellTop.dataset.piece && !cellTopTop.dataset.piece) {
+        if (cellRow === 2 && !cellTop.dataset.piece && !cellTopTop.dataset.piece && !selfCheckAfterMove(cell, cellTopTop)) {
             validDestinations.push(cellTopTop);
         }
         // Take piece diagonally left
         const cellDiagLeft = document.querySelector(`[data-row='${cellRow + 1}'][data-col='${cellCol - 1}']`);
-        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.color === "dark") {
+        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.color === "dark" && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // Take piece diagonally right
         const cellDiagRight = document.querySelector(`[data-row='${cellRow + 1}'][data-col='${cellCol + 1}']`);
-        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.color === "dark") {
+        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.color === "dark" && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
         // En Passant diagonally left
-        if (players.dark.enPassant === cellCol - 1  && cellRow === 5) {
+        if (players.dark.enPassant === cellCol - 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // En Passant diagonally right
-        if (players.dark.enPassant === cellCol + 1  && cellRow === 5) {
+        if (players.dark.enPassant === cellCol + 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
     } else if (cellPiece === "pawn" && cellColor === "dark") {
         // One forward from initial board position
         const cellBot = document.querySelector(`[data-row='${cellRow - 1}'][data-col='${cellCol}']`);
-        if (cellBot && !cellBot.dataset.piece) {
+        if (cellBot && !cellBot.dataset.piece && !selfCheckAfterMove(cell, cellBot)) {
             validDestinations.push(cellBot);
         }
         // Two forward from initial board position
         const cellBotBot = document.querySelector(`[data-row='${cellRow - 2}'][data-col='${cellCol}']`);
-        if (cellRow === 7 && !cellBot.dataset.piece && !cellBotBot.dataset.piece) {
+        if (cellRow === 7 && !cellBot.dataset.piece && !cellBotBot.dataset.piece && !selfCheckAfterMove(cell, cellBotBot)) {
             validDestinations.push(cellBotBot);
         }
         // Take piece diagonally left
         const cellDiagLeft = document.querySelector(`[data-row='${cellRow - 1}'][data-col='${cellCol - 1}']`);
-        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.color === "light") {
+        if (cellDiagLeft && cellDiagLeft.dataset.piece && cellDiagLeft.dataset.color === "light" && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // Take piece diagonally right
         const cellDiagRight = document.querySelector(`[data-row='${cellRow - 1}'][data-col='${cellCol + 1}']`);
-        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.color === "light") {
+        if (cellDiagRight && cellDiagRight.dataset.piece && cellDiagRight.dataset.color === "light" && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
         // En Passant diagonally left
-        if (players.dark.enPassant === cellCol - 1  && cellRow === 6) {
+        if (players.dark.enPassant === cellCol - 1  && cellRow === 6 && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // En Passant diagonally right
-        if (players.dark.enPassant === cellCol + 1  && cellRow === 6) {
+        if (players.dark.enPassant === cellCol + 1  && cellRow === 6 && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
     } else if (cellPiece === "knight") {
@@ -386,7 +386,7 @@ function getValidDestinations(cell) {
         movePattern.forEach(move => {
             const possibleCell = document.querySelector(`[data-row='${cellRow + move[0]}'][data-col='${cellCol + move[1]}']`);
             
-            if (possibleCell && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor)) {
+            if (possibleCell && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor) && !selfCheckAfterMove(cell, possibleCell)) {
                 validDestinations.push(possibleCell);
             }
         });
@@ -403,9 +403,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagTopLeftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagTopLeftEnd = true;
@@ -420,9 +420,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagTopRightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagTopRightEnd = true;
@@ -437,9 +437,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagBotLeftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagBotLeftEnd = true;
@@ -454,9 +454,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagBotRightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagBotRightEnd = true;
@@ -476,9 +476,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     leftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     leftEnd = true;
@@ -493,9 +493,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     rightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     rightEnd = true;
@@ -510,9 +510,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     topEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     topEnd = true;
@@ -527,9 +527,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     botEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     botEnd = true;
@@ -553,9 +553,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagTopLeftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagTopLeftEnd = true;
@@ -570,9 +570,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagTopRightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagTopRightEnd = true;
@@ -587,9 +587,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagBotLeftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagBotLeftEnd = true;
@@ -604,9 +604,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     diagBotRightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     diagBotRightEnd = true;
@@ -621,9 +621,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     leftEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     leftEnd = true;
@@ -638,9 +638,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     rightEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     rightEnd = true;
@@ -655,9 +655,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     topEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     topEnd = true;
@@ -672,9 +672,9 @@ function getValidDestinations(cell) {
 
             if (possibleCell) {
                 if (!possibleCell.dataset.piece) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color !== cellColor) {
-                    validDestinations.push(possibleCell);
+                    if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
                     botEnd = true;
                 } else if (possibleCell.dataset.piece && possibleCell.dataset.color === cellColor) {
                     botEnd = true;
@@ -682,54 +682,47 @@ function getValidDestinations(cell) {
             }
         }
     } else if (cellPiece === "king") {
-        const enemyColor = (cellColor === "light") ? "dark" : "light";
-        const enemyPieces = document.querySelectorAll(`[data-color='${enemyColor}']`);
-
-        let coveredCells = [];
-
-        enemyPieces.forEach(piece => {
-            coveredCells = coveredCells.concat(getCoveredCells(piece));
-        });
-
         const movePattern = [[1, -1], [1, 0], [1, 1], [0, -1], [0, 1], [-1, -1], [-1, 0], [-1, 1]];
 
         movePattern.forEach(move => {
             const possibleCell = document.querySelector(`[data-row='${cellRow + move[0]}'][data-col='${cellCol + move[1]}']`);
             
-            if (possibleCell && !coveredCells.includes(possibleCell) && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor)) {
+            if (possibleCell && !selfCheckAfterMove(cell, possibleCell) && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor)) {
                 validDestinations.push(possibleCell);
             }
         });
 
-        // Castle Short
-        const cellRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 1}']`);
-        const cellRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 2}']`);
-        const cellRightRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 3}']`);
-        if (players[CURRENT_PLAYER].canCastleShort &&
-            !cellRight.dataset.piece &&
-            !cellRightRight.dataset.piece &&
-            !coveredCells.includes(cellRight) &&
-            !coveredCells.includes(cellRightRight))
-        {
-            validDestinations.push(cellRightRight);
-            validDestinations.push(cellRightRightRight);
-        }
-
-        // Castle Long
-        const cellLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 1}']`);
-        const cellLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 2}']`);
-        const cellLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 3}']`);
-        const cellLeftLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 4}']`);
-        if (players[CURRENT_PLAYER].canCastleLong &&
-            !cellLeft.dataset.piece &&
-            !cellLeftLeft.dataset.piece &&
-            !cellLeftLeftLeft.dataset.piece &&
-            !coveredCells.includes(cellLeft) &&
-            !coveredCells.includes(cellLeftLeft) &&
-            !coveredCells.includes(cellLeftLeftLeft))
-        {
-            validDestinations.push(cellLeftLeft);
-            validDestinations.push(cellLeftLeftLeftLeft);
+        if (!isCheck(CURRENT_PLAYER)) {
+            // Castle Short
+    
+            const cellRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 1}']`);
+            const cellRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 2}']`);
+            const cellRightRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 3}']`);
+            if (players[CURRENT_PLAYER].canCastleShort &&
+                !cellRight.dataset.piece &&
+                !cellRightRight.dataset.piece &&
+                !selfCheckAfterMove(cell, cellRight) &&
+                !selfCheckAfterMove(cell, cellRightRight))
+            {
+                validDestinations.push(cellRightRight);
+                validDestinations.push(cellRightRightRight);
+            }
+    
+            // Castle Long
+            const cellLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 1}']`);
+            const cellLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 2}']`);
+            const cellLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 3}']`);
+            const cellLeftLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 4}']`);
+            if (players[CURRENT_PLAYER].canCastleLong &&
+                !cellLeft.dataset.piece &&
+                !cellLeftLeft.dataset.piece &&
+                !cellLeftLeftLeft.dataset.piece &&
+                !selfCheckAfterMove(cell, cellLeft) &&
+                !selfCheckAfterMove(cell, cellLeftLeft))
+            {
+                validDestinations.push(cellLeftLeft);
+                validDestinations.push(cellLeftLeftLeftLeft);
+            }
         }
     }
 
@@ -889,12 +882,14 @@ function selfCheckAfterMove(activeCell, destinationCell) {
 }
 
 function isCheckmate(color) {
+    if (!isCheck(color)) return;
     const playersPieces = document.querySelectorAll(`[data-color='${color}']`);
 
     let checkmate = true;
 
     playersPieces.forEach(piece => {
         const validDestinations = getValidDestinations(piece);
+        if (!validDestinations) return;
         validDestinations.forEach(destination => {
             if (!selfCheckAfterMove(piece, destination)) {
                 checkmate = false;
@@ -915,6 +910,33 @@ function selectPiece(cell) {
 function unselectPiece() {
     clearHighlightedCells();
     setActiveCell(null);
+}
+
+function hasValidMoves(color) {
+    const playersPieces = document.querySelectorAll(`[data-color='${color}']`);
+
+    let availableMoves = [];
+    playersPieces.forEach(piece => {
+        availableMoves = availableMoves.concat(getValidDestinations(piece));
+    });
+
+    console.log(availableMoves.length)
+
+    if (availableMoves.length === 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function clearCheckedKingHighlight(color) {
+    const kingCell = document.querySelector(`[data-piece='king'][data-color='${color}']`);
+    kingCell.classList.remove("checked");
+}
+
+function highlightCheckedKing(color) {
+    const kingCell = document.querySelector(`[data-piece='king'][data-color='${color}']`);
+    kingCell.classList.add("checked");
 }
 
 function initBoard() {
@@ -973,10 +995,19 @@ function initBoard() {
                     unselectPiece();
                 } else if (ACTIVE_CELL && VALID_DESTINATIONS.includes(clickedCell)) {
                     if (!selfCheckAfterMove(ACTIVE_CELL, clickedCell)) {
+                        clearCheckedKingHighlight(CURRENT_PLAYER);
                         executeMove(clickedCell);
+                    }
+                    if (isCheck(CURRENT_PLAYER)) {
+                        highlightCheckedKing(CURRENT_PLAYER);
                     }
                     if (isCheckmate(CURRENT_PLAYER)) {
                         soundCheckmate.play();
+                        alert("CHECKMATE!");
+                    }
+                    if (!isCheck(CURRENT_PLAYER) && !hasValidMoves(CURRENT_PLAYER)) {
+                        soundCheckmate.play();
+                        alert("STALEMATE!");
                     }
                 } else if (clickedCell.dataset.color === CURRENT_PLAYER) {
                     selectPiece(clickedCell);
