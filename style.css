@@ -74,7 +74,7 @@ body {
 }
 
 .cell.checked {
-    background-color: aqua;
+    background-color: red;
 }
 
 [data-piece="pawn"][data-color="light"] {

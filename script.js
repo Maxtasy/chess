@@ -168,7 +168,7 @@ function getCoveredCells(cell) {
         for (let i = 1; i < 8; i++) {
             if (topEnd) break;
 
-            const possibleCell = document.querySelector(`[data-row='${cellRow + 1}'][data-col='${cellCol}']`);
+            const possibleCell = document.querySelector(`[data-row='${cellRow + i}'][data-col='${cellCol}']`);
 
             if (possibleCell) {
                 if (possibleCell.dataset.piece) {
@@ -181,7 +181,7 @@ function getCoveredCells(cell) {
         for (let i = 1; i < 8; i++) {
             if (botEnd) break;
 
-            const possibleCell = document.querySelector(`[data-row='${cellRow - 1}'][data-col='${cellCol}']`);
+            const possibleCell = document.querySelector(`[data-row='${cellRow - i}'][data-col='${cellCol}']`);
 
             if (possibleCell) {
                 if (possibleCell.dataset.piece) {
@@ -281,7 +281,7 @@ function getCoveredCells(cell) {
         for (let i = 1; i < 8; i++) {
             if (topEnd) break;
 
-            const possibleCell = document.querySelector(`[data-row='${cellRow + 1}'][data-col='${cellCol}']`);
+            const possibleCell = document.querySelector(`[data-row='${cellRow + i}'][data-col='${cellCol}']`);
 
             if (possibleCell) {
                 if (possibleCell.dataset.piece) {
@@ -294,7 +294,7 @@ function getCoveredCells(cell) {
         for (let i = 1; i < 8; i++) {
             if (botEnd) break;
 
-            const possibleCell = document.querySelector(`[data-row='${cellRow - 1}'][data-col='${cellCol}']`);
+            const possibleCell = document.querySelector(`[data-row='${cellRow - i}'][data-col='${cellCol}']`);
 
             if (possibleCell) {
                 if (possibleCell.dataset.piece) {
@@ -374,11 +374,11 @@ function getValidDestinations(cell) {
             validDestinations.push(cellDiagRight);
         }
         // En Passant diagonally left
-        if (players.dark.enPassant === cellCol - 1  && cellRow === 6 && !selfCheckAfterMove(cell, cellDiagLeft)) {
+        if (players.light.enPassant === cellCol - 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // En Passant diagonally right
-        if (players.dark.enPassant === cellCol + 1  && cellRow === 6 && !selfCheckAfterMove(cell, cellDiagRight)) {
+        if (players.light.enPassant === cellCol + 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
     } else if (cellPiece === "knight") {
@@ -687,8 +687,8 @@ function getValidDestinations(cell) {
         movePattern.forEach(move => {
             const possibleCell = document.querySelector(`[data-row='${cellRow + move[0]}'][data-col='${cellCol + move[1]}']`);
             
-            if (possibleCell && !selfCheckAfterMove(cell, possibleCell) && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor)) {
-                validDestinations.push(possibleCell);
+            if (possibleCell && (!possibleCell.dataset.piece || possibleCell.dataset.color !== cellColor)) {
+                if (!selfCheckAfterMove(cell, possibleCell)) validDestinations.push(possibleCell);
             }
         });
 
@@ -920,8 +920,6 @@ function hasValidMoves(color) {
         availableMoves = availableMoves.concat(getValidDestinations(piece));
     });
 
-    console.log(availableMoves.length)
-
     if (availableMoves.length === 0) {
         return false;
     } else {
@@ -999,6 +997,7 @@ function initBoard() {
                         executeMove(clickedCell);
                     }
                     if (isCheck(CURRENT_PLAYER)) {
+                        console.log("check")
                         highlightCheckedKing(CURRENT_PLAYER);
                     }
                     if (isCheckmate(CURRENT_PLAYER)) {
