@@ -18,10 +18,14 @@ server.listen(PORT, () => {
 
 const players = {
     light: {
-        id: null
+        id: null,
+        connected: false,
+        ready: false
     },
     dark: {
-        id: null
+        id: null,
+        connected: false,
+        ready: false
     }
 };
 
@@ -30,20 +34,43 @@ io.on("connect", socket => {
     const clientId = guid();
     console.log(`Client (${clientId}) connected to server.`);
 
+    let role;
+
     if (!players.light.id) {
         players.light.id = clientId;
+        role = "light";
         console.log(`Client (${clientId}) is set to player light.`);
-        socket.emit("connected-as" , "light");
     }
     else if (!players.dark.id) {
         players.dark.id = clientId;
+        role = "dark";
         console.log(`Client (${clientId}) is set to player dark.`);
-        socket.emit("connected-as" , "dark");
     }
     else {
+        role = "spectator";
         console.log(`Client (${clientId}) joined spectators.`);
-        socket.emit("connected-as" , "spectator");
     }
+
+    const gameInfo = {
+        role: role,
+        players: players
+    };
+
+    socket.emit("game-info", gameInfo);
+
+    socket.on("player-connected", color => {
+        players[color].connected = true;
+        socket.broadcast.emit("player-connected", color);
+    });
+
+    socket.on("client-ready", color => {
+        players[color].ready = true;
+        socket.broadcast.emit("player-ready", color);
+    });
+
+    socket.on("executed-move", moveInfo => {
+        socket.broadcast.emit("executed-move", moveInfo);
+    });
 
     socket.on("disconnect", () => {
         console.log(`Client (${clientId}) left the server.`);
@@ -54,10 +81,6 @@ io.on("connect", socket => {
             players.dark.id = null;
             console.log(`Dark player left the server.`);
         }
-    });
-
-    socket.on("executed-move", moveInfo => {
-        socket.broadcast.emit("executed-move", moveInfo);
     });
 });
 

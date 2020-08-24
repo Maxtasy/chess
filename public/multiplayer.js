@@ -1,6 +1,11 @@
 const gridContainer = document.querySelector(".grid-container");
 const playerRole = document.querySelector(".player-role");
 const turnDisplay = document.querySelector(".turn-display");
+const readyButton = document.querySelector(".ready-button");
+const lightConnectedSpan = document.querySelector(".status .light .connected");
+const darkConnectedSpan = document.querySelector(".status .dark .connected");
+const lightReadySpan = document.querySelector(".status .light .ready");
+const darkReadySpan = document.querySelector(".status .dark .ready");
 
 const soundMove = new Audio();
 soundMove.src = "audio/Move.mp3";
@@ -13,6 +18,10 @@ let VALID_DESTINATIONS = null;
 let CURRENT_PLAYER = "light";
 let CLIENT_COLOR = null;
 let GAME_STARTED = false;
+let CLIENT_CONNECTED = false;
+let CLIENT_RDY = false;
+let OPPONENT_CONNECTED = false;
+let OPPONENT_RDY = false;
 
 const players = {
     light: {
@@ -31,15 +40,63 @@ const players = {
 
 const socket = io();
 
-socket.on("connected-as", role => {
-    console.log(`You connected as ${role}`);
-    playerRole.textContent = `You are connected as ${role}`;
-    turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
+socket.on("game-info", gameInfo => {
+    console.log(`You connected as ${gameInfo.role}`);
+    playerRole.textContent = `You are connected as ${gameInfo.role}`;
+    turnDisplay.textContent = `Waiting for opponent to join.`;
 
-    if (role === "light") {
-        CLIENT_COLOR = "light";
-    } else if (role === "dark") {
-        CLIENT_COLOR = "light";
+    if (gameInfo.role === "light" || gameInfo.role === "dark") {
+        CLIENT_COLOR = gameInfo.role;
+        readyButton.classList.add("show");
+        CLIENT_CONNECTED = true;
+        if (CLIENT_COLOR === "light") {
+            socket.emit("player-connected", "light");
+            lightConnectedSpan.classList.add("green");
+            if (gameInfo.players.dark.connected) {
+                darkConnectedSpan.classList.add("green");
+                OPPONENT_CONNECTED = true;
+                turnDisplay.textContent = `Waiting for opponent to ready up.`;
+            }
+            if (gameInfo.players.dark.ready) {
+                darkReadySpan.classList.add("green");
+                OPPONENT_RDY = true;
+            }
+        } else if (CLIENT_COLOR === "dark") {
+            socket.emit("player-connected", "dark");
+            darkConnectedSpan.classList.add("green");
+            if (gameInfo.players.light.connected) {
+                lightConnectedSpan.classList.add("green");
+                OPPONENT_CONNECTED = true;
+                turnDisplay.textContent = `Waiting for opponent to ready up.`;
+            }
+            if (gameInfo.players.light.ready) {
+                lightReadySpan.classList.add("green");
+                OPPONENT_RDY = true;
+            }
+        }
+    }
+});
+
+socket.on("player-connected", color => {
+    if (color === "light") {
+        lightConnectedSpan.classList.add("green");
+    } else if (color === "dark") {
+        darkConnectedSpan.classList.add("green");
+    }
+    OPPONENT_CONNECTED = true;
+});
+
+socket.on("player-ready", color => {
+    if (color === "light") {
+        lightReadySpan.classList.add("green");
+    } else if (color === "dark") {
+        darkReadySpan.classList.add("green");
+    }
+    OPPONENT_RDY = true;
+
+    if (CLIENT_RDY && OPPONENT_RDY) {
+        GAME_STARTED = true;
+        turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
     }
 });
 
@@ -1063,5 +1120,23 @@ function initBoard() {
         }
     }
 }
+
+readyButton.addEventListener("click", () => {
+    if (!OPPONENT_CONNECTED) return;
+    socket.emit("client-ready", CLIENT_COLOR);
+    CLIENT_RDY = true;
+    if (CLIENT_COLOR === "light") {
+        lightReadySpan.classList.add("green");
+    } else if (CLIENT_COLOR === "dark") {
+        darkReadySpan.classList.add("green");
+    }
+
+    if (CLIENT_RDY && OPPONENT_RDY) {
+        GAME_STARTED = true;
+        turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
+    }
+
+    readyButton.classList.remove("show");
+});
 
 initBoard();
