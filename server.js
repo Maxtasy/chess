@@ -16,33 +16,49 @@ server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
 });
 
-const players = {
-    light: {
-        id: null,
-        connected: false,
-        ready: false
-    },
-    dark: {
-        id: null,
-        connected: false,
-        ready: false
-    }
-};
+const games = {}
 
 // sockets stays open, we can just add variables in here
 io.on("connect", socket => {
+    const UrlParams = socket.handshake.headers.referer.split("?")[1];
+    console.log(UrlParams)
+    if (!UrlParams || !UrlParams.includes("gameId")) {
+        socket.emit("invalid-gameId");
+        return;
+    }
+
+    const gameId = UrlParams.replace("gameId=" , "");
     const clientId = guid();
     console.log(`Client (${clientId}) connected to server.`);
 
+    if (!games[gameId]) {
+        console.log(`New game (${gameId}) has been created.`)
+        const players = {
+            light: {
+                id: null,
+                connected: false,
+                ready: false
+            },
+            dark: {
+                id: null,
+                connected: false,
+                ready: false
+            }
+        };
+        // games[gameId].started = false;
+        // games[gameId].players = players;
+        games[gameId] = players;
+    }
+
     let role;
 
-    if (!players.light.id) {
-        players.light.id = clientId;
+    if (!games[gameId].light.id) {
+        games[gameId].light.id = clientId;
         role = "light";
         console.log(`Client (${clientId}) is set to player light.`);
     }
-    else if (!players.dark.id) {
-        players.dark.id = clientId;
+    else if (!games[gameId].dark.id) {
+        games[gameId].dark.id = clientId;
         role = "dark";
         console.log(`Client (${clientId}) is set to player dark.`);
     }
@@ -53,18 +69,18 @@ io.on("connect", socket => {
 
     const gameInfo = {
         role: role,
-        players: players
+        game: games[gameId]
     };
 
     socket.emit("game-info", gameInfo);
 
     socket.on("player-connected", color => {
-        players[color].connected = true;
+        games[gameId][color].connected = true;
         socket.broadcast.emit("player-connected", color);
     });
 
     socket.on("client-ready", color => {
-        players[color].ready = true;
+        games[gameId][color].ready = true;
         socket.broadcast.emit("player-ready", color);
     });
 
@@ -73,13 +89,24 @@ io.on("connect", socket => {
     });
 
     socket.on("disconnect", () => {
+        if (!games[gameId]) return;
         console.log(`Client (${clientId}) left the server.`);
-        if (players.light.id === clientId) {
-            players.light.id = null;
+        if (games[gameId].light.id === clientId) {
+            games[gameId].light.id = null;
+            games[gameId].light.connected = false;
+            games[gameId].light.ready = false;
             console.log(`Light player left the server.`);
-        } else if (players.dark.id === clientId) {
-            players.dark.id = null;
+            socket.broadcast.emit("player-disconnected", "light");
+        } else if (games[gameId].dark.id === clientId) {
+            games[gameId].dark.id = null;
+            games[gameId].dark.connected = false;
+            games[gameId].dark.ready = false;
             console.log(`Dark player left the server.`);
+            socket.broadcast.emit("player-disconnected", "dark");
+        }
+
+        if (!games[gameId].light.id && !games[gameId].dark.id) {
+            delete games[gameId];
         }
     });
 });

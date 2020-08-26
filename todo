@@ -1,5 +1,4 @@
-- Make display like in battleships with connected/ready
+- Redirect if we connect to an already started game
 - Pick piece when promoting (Add overlay with position absolute and disable any other clicks)
 - Stalemate condition (not enough pieces, threefold repetition)
 - Highlight last move
-- on checkmate disable board

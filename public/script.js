@@ -1,24 +1,9 @@
 const multiplayerButton = document.querySelector("#multiplayer-button");
-const gameSetupContainer = document.querySelector(".game-setup");
 const createGameButton = document.querySelector("#create-game");
-const joinGameButton = document.querySelector("#join-game");
-const joinCodeInput = document.querySelector("#join-code");
-const joinCodeOutput = document.querySelector("#join-code-output");
-
-let gameId = null;
 
 multiplayerButton.addEventListener("click", () => {
-    gameSetupContainer.classList.toggle("show");
-});
-
-createGameButton.addEventListener("click", () => {
-    gameId = guid();
-    joinCodeOutput.textContent = gameId;
-});
-
-joinGameButton.addEventListener("click", () => {
-    const id = joinCodeInput.value || gameId;
-    window.location.href = "multiplayer.html";
+    const gameId = guid();
+    window.location.href = `/multiplayer/index.html?gameId=${gameId}`;
 });
 
 // Code to gerenate GUIDs

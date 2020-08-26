@@ -1,17 +1,18 @@
 const gridContainer = document.querySelector(".grid-container");
-const playerRole = document.querySelector(".player-role");
-const turnDisplay = document.querySelector(".turn-display");
+const infoText = document.querySelector(".info-text");
 const readyButton = document.querySelector(".ready-button");
-const lightConnectedSpan = document.querySelector(".status .light .connected");
-const darkConnectedSpan = document.querySelector(".status .dark .connected");
-const lightReadySpan = document.querySelector(".status .light .ready");
-const darkReadySpan = document.querySelector(".status .dark .ready");
+const lightPlayerName = document.querySelector(".status .light .player-name");
+const darkPlayerName = document.querySelector(".status .dark .player-name");
+const lightConnectedIcon = document.querySelector(".status .light .connected");
+const darkConnectedIcon = document.querySelector(".status .dark .connected");
+const lightReadyIcon = document.querySelector(".status .light .ready");
+const darkReadyIcon = document.querySelector(".status .dark .ready");
 
 const soundMove = new Audio();
-soundMove.src = "audio/Move.mp3";
+soundMove.src = "../audio/Move.mp3";
 
 const soundCheckmate = new Audio();
-soundCheckmate.src = "audio/Checkmate.mp3";
+soundCheckmate.src = "../audio/Checkmate.mp3";
 
 let ACTIVE_CELL = null;
 let VALID_DESTINATIONS = null;
@@ -22,6 +23,7 @@ let CLIENT_CONNECTED = false;
 let CLIENT_RDY = false;
 let OPPONENT_CONNECTED = false;
 let OPPONENT_RDY = false;
+let GAME_OVER = false;
 
 const players = {
     light: {
@@ -40,63 +42,111 @@ const players = {
 
 const socket = io();
 
+socket.on("invalid-gameId", () => {
+    window.location.href = `../`;
+});
+
 socket.on("game-info", gameInfo => {
     console.log(`You connected as ${gameInfo.role}`);
-    playerRole.textContent = `You are connected as ${gameInfo.role}`;
-    turnDisplay.textContent = `Waiting for opponent to join.`;
+    infoText.textContent = `Invite a player by sending them the URL.`;
 
-    if (gameInfo.role === "light" || gameInfo.role === "dark") {
-        CLIENT_COLOR = gameInfo.role;
-        readyButton.classList.add("show");
+    if (gameInfo.role === "light") {
         CLIENT_CONNECTED = true;
-        if (CLIENT_COLOR === "light") {
-            socket.emit("player-connected", "light");
-            lightConnectedSpan.classList.add("green");
-            if (gameInfo.players.dark.connected) {
-                darkConnectedSpan.classList.add("green");
-                OPPONENT_CONNECTED = true;
-                turnDisplay.textContent = `Waiting for opponent to ready up.`;
-            }
-            if (gameInfo.players.dark.ready) {
-                darkReadySpan.classList.add("green");
-                OPPONENT_RDY = true;
-            }
-        } else if (CLIENT_COLOR === "dark") {
-            socket.emit("player-connected", "dark");
-            darkConnectedSpan.classList.add("green");
-            if (gameInfo.players.light.connected) {
-                lightConnectedSpan.classList.add("green");
-                OPPONENT_CONNECTED = true;
-                turnDisplay.textContent = `Waiting for opponent to ready up.`;
-            }
-            if (gameInfo.players.light.ready) {
-                lightReadySpan.classList.add("green");
-                OPPONENT_RDY = true;
-            }
+        CLIENT_COLOR = "light";
+        lightPlayerName.textContent = "Light (You)";
+        readyButton.classList.add("show");
+        lightConnectedIcon.classList.remove("fa-times");
+        lightConnectedIcon.classList.add("fa-check");
+
+        socket.emit("player-connected", "light");
+
+        if (gameInfo.game.dark.connected) {
+            OPPONENT_CONNECTED = true;
+            readyButton.textContent = "Ready";
+            infoText.textContent = `Ready up to start the game.`;
         }
+        if (gameInfo.game.dark.ready) {
+            OPPONENT_RDY = true;
+        }
+    } else if (gameInfo.role === "dark") {
+        CLIENT_CONNECTED = true;
+        CLIENT_COLOR = "dark";
+        darkPlayerName.textContent = "Dark (You)";
+        readyButton.classList.add("show");
+        darkConnectedIcon.classList.remove("fa-times");
+        darkConnectedIcon.classList.add("fa-check");
+
+        socket.emit("player-connected", "dark");
+        if (gameInfo.game.light.connected) {
+            OPPONENT_CONNECTED = true;
+            readyButton.textContent = "Ready";
+            infoText.textContent = `Ready up to start the game.`;
+        }
+        if (gameInfo.game.light.ready) {
+            OPPONENT_RDY = true;
+        }
+    } else {
+        infoText.textContent = "You joined the spectators.";
+    }
+
+    if (gameInfo.game.dark.connected) {
+        darkConnectedIcon.classList.remove("fa-times");
+        darkConnectedIcon.classList.add("fa-check");
+    }
+    if (gameInfo.game.dark.ready) {
+        darkReadyIcon.classList.remove("fa-times");
+        darkReadyIcon.classList.add("fa-check");
+    }
+    if (gameInfo.game.light.connected) {
+        lightConnectedIcon.classList.remove("fa-times");
+        lightConnectedIcon.classList.add("fa-check");
+    }
+    if (gameInfo.game.light.ready) {
+        lightReadyIcon.classList.remove("fa-times");
+        lightReadyIcon.classList.add("fa-check");
     }
 });
 
 socket.on("player-connected", color => {
     if (color === "light") {
-        lightConnectedSpan.classList.add("green");
+        lightConnectedIcon.classList.remove("fa-times");
+        lightConnectedIcon.classList.add("fa-check");
     } else if (color === "dark") {
-        darkConnectedSpan.classList.add("green");
+        darkConnectedIcon.classList.remove("fa-times");
+        darkConnectedIcon.classList.add("fa-check");
     }
     OPPONENT_CONNECTED = true;
+    readyButton.textContent = "Ready";
+    infoText.textContent = `Ready up to start the game.`;
+});
+
+socket.on("player-disconnected", color => {
+    if (color === "light") {
+        lightConnectedIcon.classList.remove("fa-check");
+        lightConnectedIcon.classList.add("fa-times");
+    } else if (color === "dark") {
+        darkConnectedIcon.classList.remove("fa-check");
+        darkConnectedIcon.classList.add("fa-times");
+    }
+    if (GAME_OVER) return;
+    OPPONENT_CONNECTED = false;
+    readyButton.textContent = "Waiting for Opponent";
+    infoText.textContent = `Invite a player by sending them the URL.`;
 });
 
 socket.on("player-ready", color => {
     if (color === "light") {
-        lightReadySpan.classList.add("green");
+        lightReadyIcon.classList.remove("fa-times");
+        lightReadyIcon.classList.add("fa-check");
     } else if (color === "dark") {
-        darkReadySpan.classList.add("green");
+        darkReadyIcon.classList.remove("fa-times");
+        darkReadyIcon.classList.add("fa-check");
     }
     OPPONENT_RDY = true;
 
     if (CLIENT_RDY && OPPONENT_RDY) {
         GAME_STARTED = true;
-        turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
+        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
     }
 });
 
@@ -912,6 +962,8 @@ function movePieceToNewDestination(cell) {
 }
 
 function executeMove(destinationCell, wasOpponentMove) {
+    clearCheckedKingHighlight(CURRENT_PLAYER);
+
     if (!wasOpponentMove) {
         const active = {
             row: parseInt(ACTIVE_CELL.dataset.row),
@@ -934,7 +986,21 @@ function executeMove(destinationCell, wasOpponentMove) {
     players[CURRENT_PLAYER].enPassant = null;
     soundMove.play();
     
-    turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
+    if (isCheck(CURRENT_PLAYER)) {
+        highlightCheckedKing(CURRENT_PLAYER);
+    }
+
+    if (isCheckmate(CURRENT_PLAYER)) {
+        soundCheckmate.play();
+        infoText.textContent = `${CURRENT_PLAYER} is checkmate`;
+        GAME_OVER = true;
+    } else if (!isCheck(CURRENT_PLAYER) && !hasValidMoves(CURRENT_PLAYER)) {
+        soundCheckmate.play();
+        infoText.textContent = `Stalemate`;
+        GAME_OVER = true;
+    } else {
+        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
+    }
 }
 
 function isCheck(color) {
@@ -1087,27 +1153,14 @@ function initBoard() {
             }
 
             cell.addEventListener("click", (e) => {
-                if (CURRENT_PLAYER !== CLIENT_COLOR || !GAME_STARTED) return;
+                if (CURRENT_PLAYER !== CLIENT_COLOR || !GAME_STARTED || GAME_OVER) return;
                 const clickedCell = e.target;
 
                 if (ACTIVE_CELL === clickedCell) {
                     unselectPiece();
                 } else if (ACTIVE_CELL && VALID_DESTINATIONS.includes(clickedCell)) {
                     if (!selfCheckAfterMove(ACTIVE_CELL, clickedCell)) {
-                        clearCheckedKingHighlight(CURRENT_PLAYER);
                         executeMove(clickedCell);
-                    }
-                    if (isCheck(CURRENT_PLAYER)) {
-                        console.log("check")
-                        highlightCheckedKing(CURRENT_PLAYER);
-                    }
-                    if (isCheckmate(CURRENT_PLAYER)) {
-                        soundCheckmate.play();
-                        alert("CHECKMATE!");
-                    }
-                    if (!isCheck(CURRENT_PLAYER) && !hasValidMoves(CURRENT_PLAYER)) {
-                        soundCheckmate.play();
-                        alert("STALEMATE!");
                     }
                 } else if (clickedCell.dataset.color === CURRENT_PLAYER) {
                     selectPiece(clickedCell);
@@ -1126,14 +1179,18 @@ readyButton.addEventListener("click", () => {
     socket.emit("client-ready", CLIENT_COLOR);
     CLIENT_RDY = true;
     if (CLIENT_COLOR === "light") {
-        lightReadySpan.classList.add("green");
+        lightReadyIcon.classList.remove("fa-times");
+        lightReadyIcon.classList.add("fa-check");
     } else if (CLIENT_COLOR === "dark") {
-        darkReadySpan.classList.add("green");
+        darkReadyIcon.classList.remove("fa-times");
+        darkReadyIcon.classList.add("fa-check");
     }
 
     if (CLIENT_RDY && OPPONENT_RDY) {
         GAME_STARTED = true;
-        turnDisplay.textContent = `Current turn: ${CURRENT_PLAYER}`;
+        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
+    } else {
+        infoText.textContent = `Waiting for opponent to ready up.`;
     }
 
     readyButton.classList.remove("show");
