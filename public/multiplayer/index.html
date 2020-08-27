@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Montserrat&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="multiplayer.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://kit.fontawesome.com/b63e312eb4.js" crossorigin="anonymous"></script>
@@ -10,8 +11,12 @@
     <title>Chess ♟️</title>
 </head>
 <body>
-    <button class="ready-button">Waiting for Opponent</button>
+    <button class="ready-button"><span id="ready-button-text">Waiting for Opponent </span><i class="fas fa-spinner show"></i></button>
     <div class="info-text"></div>
+    <div class="chat-container">
+        <textarea name="chat-output" id="chat-output" class="chat-output" disabled></textarea>
+        <input name="chat-input" id="chat-input" class="chat-input" type="text">
+    </div>
     <div class="status">
         <div class="dark">
             <span class="player-name">Dark</span>

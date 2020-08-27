@@ -45,20 +45,22 @@ io.on("connect", socket => {
                 ready: false
             }
         };
-        // games[gameId].started = false;
-        // games[gameId].players = players;
-        games[gameId] = players;
+        
+        games[gameId] = {
+            started: false,
+            players: players
+        };
     }
 
     let role;
 
-    if (!games[gameId].light.id) {
-        games[gameId].light.id = clientId;
+    if (!games[gameId].players.light.id) {
+        games[gameId].players.light.id = clientId;
         role = "light";
         console.log(`Client (${clientId}) is set to player light.`);
     }
-    else if (!games[gameId].dark.id) {
-        games[gameId].dark.id = clientId;
+    else if (!games[gameId].players.dark.id) {
+        games[gameId].players.dark.id = clientId;
         role = "dark";
         console.log(`Client (${clientId}) is set to player dark.`);
     }
@@ -75,12 +77,12 @@ io.on("connect", socket => {
     socket.emit("game-info", gameInfo);
 
     socket.on("player-connected", color => {
-        games[gameId][color].connected = true;
+        games[gameId].players[color].connected = true;
         socket.broadcast.emit("player-connected", color);
     });
 
     socket.on("client-ready", color => {
-        games[gameId][color].ready = true;
+        games[gameId].players[color].ready = true;
         socket.broadcast.emit("player-ready", color);
     });
 
@@ -91,23 +93,27 @@ io.on("connect", socket => {
     socket.on("disconnect", () => {
         if (!games[gameId]) return;
         console.log(`Client (${clientId}) left the server.`);
-        if (games[gameId].light.id === clientId) {
-            games[gameId].light.id = null;
-            games[gameId].light.connected = false;
-            games[gameId].light.ready = false;
+        if (games[gameId].players.light.id === clientId) {
+            games[gameId].players.light.id = null;
+            games[gameId].players.light.connected = false;
+            games[gameId].players.light.ready = false;
             console.log(`Light player left the server.`);
             socket.broadcast.emit("player-disconnected", "light");
-        } else if (games[gameId].dark.id === clientId) {
-            games[gameId].dark.id = null;
-            games[gameId].dark.connected = false;
-            games[gameId].dark.ready = false;
+        } else if (games[gameId].players.dark.id === clientId) {
+            games[gameId].players.dark.id = null;
+            games[gameId].players.dark.connected = false;
+            games[gameId].players.dark.ready = false;
             console.log(`Dark player left the server.`);
             socket.broadcast.emit("player-disconnected", "dark");
         }
 
-        if (!games[gameId].light.id && !games[gameId].dark.id) {
+        if (!games[gameId].players.light.id && !games[gameId].players.dark.id) {
             delete games[gameId];
         }
+    });
+
+    socket.on("text-chat", textChatInfo => {
+        socket.broadcast.emit("text-chat", textChatInfo);
     });
 });
 

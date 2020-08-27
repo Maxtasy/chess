@@ -1,12 +1,16 @@
 const gridContainer = document.querySelector(".grid-container");
 const infoText = document.querySelector(".info-text");
 const readyButton = document.querySelector(".ready-button");
+const readyButtonText = document.querySelector("#ready-button-text");
+const readyButtonAnimation = document.querySelector(".ready-button .fa-spinner");
 const lightPlayerName = document.querySelector(".status .light .player-name");
 const darkPlayerName = document.querySelector(".status .dark .player-name");
 const lightConnectedIcon = document.querySelector(".status .light .connected");
 const darkConnectedIcon = document.querySelector(".status .dark .connected");
 const lightReadyIcon = document.querySelector(".status .light .ready");
 const darkReadyIcon = document.querySelector(".status .dark .ready");
+const chatInput = document.querySelector("#chat-input");
+const chatOutput = document.querySelector("#chat-output");
 
 const soundMove = new Audio();
 soundMove.src = "../audio/Move.mp3";
@@ -47,6 +51,11 @@ socket.on("invalid-gameId", () => {
 });
 
 socket.on("game-info", gameInfo => {
+    if (gameInfo.game.started) {
+        window.location.href = `../`;
+        return;
+    }
+
     console.log(`You connected as ${gameInfo.role}`);
     infoText.textContent = `Invite a player by sending them the URL.`;
 
@@ -60,12 +69,13 @@ socket.on("game-info", gameInfo => {
 
         socket.emit("player-connected", "light");
 
-        if (gameInfo.game.dark.connected) {
+        if (gameInfo.game.players.dark.connected) {
             OPPONENT_CONNECTED = true;
-            readyButton.textContent = "Ready";
+            readyButtonText.textContent = "Ready";
+            readyButtonAnimation.classList.remove("show");
             infoText.textContent = `Ready up to start the game.`;
         }
-        if (gameInfo.game.dark.ready) {
+        if (gameInfo.game.players.dark.ready) {
             OPPONENT_RDY = true;
         }
     } else if (gameInfo.role === "dark") {
@@ -77,31 +87,32 @@ socket.on("game-info", gameInfo => {
         darkConnectedIcon.classList.add("fa-check");
 
         socket.emit("player-connected", "dark");
-        if (gameInfo.game.light.connected) {
+        if (gameInfo.game.players.light.connected) {
             OPPONENT_CONNECTED = true;
-            readyButton.textContent = "Ready";
+            readyButtonText.textContent = "Ready";
+            readyButtonAnimation.classList.remove("show");
             infoText.textContent = `Ready up to start the game.`;
         }
-        if (gameInfo.game.light.ready) {
+        if (gameInfo.game.players.light.ready) {
             OPPONENT_RDY = true;
         }
     } else {
         infoText.textContent = "You joined the spectators.";
     }
 
-    if (gameInfo.game.dark.connected) {
+    if (gameInfo.game.players.dark.connected) {
         darkConnectedIcon.classList.remove("fa-times");
         darkConnectedIcon.classList.add("fa-check");
     }
-    if (gameInfo.game.dark.ready) {
+    if (gameInfo.game.players.dark.ready) {
         darkReadyIcon.classList.remove("fa-times");
         darkReadyIcon.classList.add("fa-check");
     }
-    if (gameInfo.game.light.connected) {
+    if (gameInfo.game.players.light.connected) {
         lightConnectedIcon.classList.remove("fa-times");
         lightConnectedIcon.classList.add("fa-check");
     }
-    if (gameInfo.game.light.ready) {
+    if (gameInfo.game.players.light.ready) {
         lightReadyIcon.classList.remove("fa-times");
         lightReadyIcon.classList.add("fa-check");
     }
@@ -116,7 +127,8 @@ socket.on("player-connected", color => {
         darkConnectedIcon.classList.add("fa-check");
     }
     OPPONENT_CONNECTED = true;
-    readyButton.textContent = "Ready";
+    readyButtonText.textContent = "Ready";
+    readyButtonAnimation.classList.remove("show");
     infoText.textContent = `Ready up to start the game.`;
 });
 
@@ -128,10 +140,19 @@ socket.on("player-disconnected", color => {
         darkConnectedIcon.classList.remove("fa-check");
         darkConnectedIcon.classList.add("fa-times");
     }
-    if (GAME_OVER) return;
-    OPPONENT_CONNECTED = false;
-    readyButton.textContent = "Waiting for Opponent";
-    infoText.textContent = `Invite a player by sending them the URL.`;
+    if (GAME_OVER) {
+        return;
+    } else if (!GAME_OVER && GAME_STARTED) {
+        OPPONENT_CONNECTED = false;
+        GAME_OVER = true;
+        infoText.textContent = `Opponent left the match early, you win.`;
+    } else {
+        OPPONENT_CONNECTED = false;
+        readyButton.classList.add(".show");
+        readyButtonAnimation.classList.add("show");
+        readyButtonText.textContent = "Waiting for Opponent ";
+        infoText.textContent = `Invite a player by sending them the URL.`;
+    }
 });
 
 socket.on("player-ready", color => {
@@ -155,6 +176,12 @@ socket.on("executed-move", move => {
     const destinationCell = document.querySelector(`[data-row='${move.destination.row}'][data-col='${move.destination.col}']`);
     setActiveCell(activeCell);
     executeMove(destinationCell, true);
+});
+
+socket.on("text-chat", textChatInfo => {
+    chatOutput.value += `${textChatInfo.color}: ${textChatInfo.text}\n`;
+    chatInput.value = "";
+    chatOutput.scrollTop = chatOutput.scrollHeight;
 });
 
 function clearHighlightedCells() {
@@ -1196,4 +1223,24 @@ readyButton.addEventListener("click", () => {
     readyButton.classList.remove("show");
 });
 
+chatInput.addEventListener("keyup", e => {
+    if (!CLIENT_COLOR) return;
+    if (e.keyCode === 13) {
+        const text = chatInput.value;
+        if (!text) return;
+        chatOutput.value += `${CLIENT_COLOR} (You): ${text}\n`;
+        chatInput.value = "";
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        
+        const textChatInfo = {
+            color: CLIENT_COLOR,
+            text: text
+        }
+        socket.emit("text-chat", textChatInfo);
+    }
+});
+
 initBoard();
+
+chatOutput.value = "";
+chatInput.value = "";
