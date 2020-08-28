@@ -145,10 +145,48 @@ body {
     background-color: #262626;
 }
 
+.input-container {
+    position: relative;
+}
+
+.input-container .emoticons-button {
+    color: white;
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    border: none;
+    outline: none;
+    height: 100%;
+    width: 3vw;
+    background: none;
+}
+
 .chat-container .chat-input:hover,
 .chat-container .chat-input:active,
 .chat-container .chat-input:focus {
     background-color: #3d3d3d;
+}
+
+.emoticons-display-container {
+    display: none;
+    position: absolute;
+    background-color: #3d3d3d;
+    border: 2px solid grey;
+    border-bottom: none;
+    font-size: 1rem;
+    padding: .25em .5em;
+    width: 18vw;
+}
+
+.emoticons-display-container.show {
+    display: flex;
+    flex-wrap: wrap;
+    transform: translateY(-100%);
+}
+
+.emoticon {
+    cursor: pointer;
+    width: 10%;
 }
 
 /* Chess board */
@@ -188,6 +226,10 @@ body {
     background-color: #962D3E;
 }
 
+.cell.last-move-highlight {
+    background-color: #f4a261;
+}
+
 .cell .move-overlay {
     display: none;
     width: 25%;
@@ -218,7 +260,7 @@ body {
 }
 
 .cell.checked {
-    background-color: red;
+    background-color: #e63946;
 }
 
 [data-piece="pawn"][data-color="light"] {

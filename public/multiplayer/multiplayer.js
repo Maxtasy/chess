@@ -11,6 +11,9 @@ const lightReadyIcon = document.querySelector(".status .light .ready");
 const darkReadyIcon = document.querySelector(".status .dark .ready");
 const chatInput = document.querySelector("#chat-input");
 const chatOutput = document.querySelector("#chat-output");
+const emoticonsButton = document.querySelector(".emoticons-button");
+const emoticonsDisplayContainer = document.querySelector(".emoticons-display-container");
+const emoticons = document.querySelectorAll(".emoticon");
 
 const soundMove = new Audio();
 soundMove.src = "../audio/Move.mp3";
@@ -168,6 +171,8 @@ socket.on("player-ready", color => {
     if (CLIENT_RDY && OPPONENT_RDY) {
         GAME_STARTED = true;
         infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
+
+        socket.emit("game-started");
     }
 });
 
@@ -981,11 +986,23 @@ function movePieceToNewDestination(cell) {
     }
 
     ACTIVE_CELL.classList.remove("active", "highlight");
+
+    // Set highlights for last move
+    clearLastMoveHighlights();
+    ACTIVE_CELL.classList.add("last-move-highlight");
+    cell.classList.add("last-move-highlight");
+
     ACTIVE_CELL.removeAttribute("data-piece");
     ACTIVE_CELL.removeAttribute("data-color");
     ACTIVE_CELL = null;
     clearHighlightedCells();
     setActiveCell(null);
+}
+
+function clearLastMoveHighlights() {
+    document.querySelectorAll(".last-move-highlight").forEach(cell => {
+        cell.classList.remove("last-move-highlight");
+    });
 }
 
 function executeMove(destinationCell, wasOpponentMove) {
@@ -1238,6 +1255,18 @@ chatInput.addEventListener("keyup", e => {
         }
         socket.emit("text-chat", textChatInfo);
     }
+});
+
+emoticonsButton.addEventListener("click", () => {
+    emoticonsDisplayContainer.classList.toggle("show");
+});
+
+emoticons.forEach(emoticon => {
+    emoticon.addEventListener("click", (e) => {
+        chatInput.value += e.target.innerText;
+        chatInput.focus();
+        emoticonsDisplayContainer.classList.remove("show");
+    });
 });
 
 initBoard();

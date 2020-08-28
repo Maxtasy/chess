@@ -115,6 +115,10 @@ io.on("connect", socket => {
     socket.on("text-chat", textChatInfo => {
         socket.broadcast.emit("text-chat", textChatInfo);
     });
+
+    socket.on("game-started", () => {
+        games[gameId].started = true;
+    });
 });
 
 // Code to gerenate GUIDs

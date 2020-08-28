@@ -822,11 +822,23 @@ function movePieceToNewDestination(cell) {
     }
 
     ACTIVE_CELL.classList.remove("active", "highlight");
+
+    // Set highlights for last move
+    clearLastMoveHighlights();
+    ACTIVE_CELL.classList.add("last-move-highlight");
+    cell.classList.add("last-move-highlight");
+    
     ACTIVE_CELL.removeAttribute("data-piece");
     ACTIVE_CELL.removeAttribute("data-color");
     ACTIVE_CELL = null;
     clearHighlightedCells();
     setActiveCell(null);
+}
+
+function clearLastMoveHighlights() {
+    document.querySelectorAll(".last-move-highlight").forEach(cell => {
+        cell.classList.remove("last-move-highlight");
+    });
 }
 
 function executeMove(destinationCell) {
@@ -997,7 +1009,6 @@ function initBoard() {
                         executeMove(clickedCell);
                     }
                     if (isCheck(CURRENT_PLAYER)) {
-                        console.log("check")
                         highlightCheckedKing(CURRENT_PLAYER);
                     }
                     if (isCheckmate(CURRENT_PLAYER)) {

@@ -89,6 +89,10 @@ body {
     background-color: #962D3E;
 }
 
+.cell.last-move-highlight {
+    background-color: #f4a261;
+}
+
 .cell .move-overlay {
     display: none;
     width: 25%;
@@ -119,7 +123,7 @@ body {
 }
 
 .cell.checked {
-    background-color: red;
+    background-color: #e63946;
 }
 
 [data-piece="pawn"][data-color="light"] {
