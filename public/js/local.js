@@ -1,10 +1,10 @@
 const gridContainer = document.querySelector(".grid-container");
 
 const soundMove = new Audio();
-soundMove.src = "audio/Move.mp3";
+soundMove.src = "../audio/Move.mp3";
 
 const soundCheckmate = new Audio();
-soundCheckmate.src = "audio/Checkmate.mp3";
+soundCheckmate.src = "../audio/Checkmate.mp3";
 
 let ACTIVE_CELL = null;
 let VALID_DESTINATIONS = null;
@@ -811,7 +811,7 @@ function movePieceToNewDestination(cell) {
             players[activeColor].canCastleShort = false;
         }
     // King moved, disable castle
-    }  else if (activePiece === "king") {
+    } else if (activePiece === "king") {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
         players[activeColor].canCastleLong = false;

@@ -22,7 +22,7 @@ const games = {}
 io.on("connect", socket => {
     const UrlParams = socket.handshake.headers.referer.split("?")[1];
     console.log(UrlParams)
-    if (!UrlParams || !UrlParams.includes("gameId")) {
+    if (!UrlParams || !UrlParams.includes("id")) {
         socket.emit("invalid-gameId");
         return;
     }

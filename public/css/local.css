@@ -1,0 +1,24 @@
+.home-link {
+    color: #F3F3F3;
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: #F3F3F3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: .5em 1em;
+    gap: .25em;
+}
+
+.home-link:hover,
+.home-link:active,
+.home-link:focus {
+    color: #962D3E;
+}
+
+.home-link .fas {
+    font-size: 1rem;
+}

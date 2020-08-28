@@ -1,9 +1,8 @@
 const multiplayerButton = document.querySelector("#multiplayer-button");
-const createGameButton = document.querySelector("#create-game");
 
 multiplayerButton.addEventListener("click", () => {
     const gameId = guid();
-    window.location.href = `/multiplayer/index.html?gameId=${gameId}`;
+    window.location.href = `/web/index.html?id=${gameId}`;
 });
 
 // Code to gerenate GUIDs

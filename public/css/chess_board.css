@@ -1,65 +1,11 @@
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Montserrat', sans-serif;
-    min-height: 100vh;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #0D0D0D; 
-}
-
-.splash-container {
-    height: 75vh;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-}
-
-.splash-title {
-    font-size: 3rem;
-    font-family: 'Bungee', cursive;
-    color: #962D3E;
-}
-
-.btn {
-    background-color: #348899;
-    color: #FFFFFF;
-    font-family: inherit;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-size: 1.3rem;
-    padding: .5em 1em;
-    border: none;
-    outline: none;
-    margin: 1em;
-    border-radius: 100vmax;
-    text-decoration: none;
-}
-
-.btn:hover {
-    background-color: #247383;
-}
-
-.splash-chess-image {
-    position: absolute;
-    bottom: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.headline {
-    color: #962D3E;
-}
-
 .grid-container {
+    grid-column: 2/3;
+    grid-row: 2/3;
+    align-self: center;
+    justify-self: center;
     box-sizing: initial;
-    width: 800px;
-    height: 800px;
+    width: 66vh;
+    height: 66vh;
     background-color: grey;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -68,8 +14,6 @@ body {
 }
 
 .cell {
-    height: 100px;
-    width: 100px;
     cursor: pointer;
     position: relative;
     display: flex;
@@ -127,68 +71,61 @@ body {
 }
 
 [data-piece="pawn"][data-color="light"] {
-    background-image: url("img/pawn_light.png");
+    background-image: url("../img/pawn_light.png");
     background-size: cover;
 }
 
 [data-piece="pawn"][data-color="dark"] {
-    background-image: url("img/pawn_dark.png");
+    background-image: url("../img/pawn_dark.png");
     background-size: cover;
 }
 
 [data-piece="rook"][data-color="light"] {
-    background-image: url("img/rook_light.png");
+    background-image: url("../img/rook_light.png");
     background-size: cover;
 }
 
 [data-piece="rook"][data-color="dark"] {
-    background-image: url("img/rook_dark.png");
+    background-image: url("../img/rook_dark.png");
     background-size: cover;
 }
 
 [data-piece="knight"][data-color="light"] {
-    background-image: url("img/knight_light.png");
+    background-image: url("../img/knight_light.png");
     background-size: cover;
 }
 
 [data-piece="knight"][data-color="dark"] {
-    background-image: url("img/knight_dark.png");
+    background-image: url("../img/knight_dark.png");
     background-size: cover;
 }
 
 [data-piece="bishop"][data-color="light"] {
-    background-image: url("img/bishop_light.png");
+    background-image: url("../img/bishop_light.png");
     background-size: cover;
 }
 
 [data-piece="bishop"][data-color="dark"] {
-    background-image: url("img/bishop_dark.png");
+    background-image: url("../img/bishop_dark.png");
     background-size: cover;
 }
 
 [data-piece="queen"][data-color="light"] {
-    background-image: url("img/queen_light.png");
+    background-image: url("../img/queen_light.png");
     background-size: cover;
 }
 
 [data-piece="queen"][data-color="dark"] {
-    background-image: url("img/queen_dark.png");
+    background-image: url("../img/queen_dark.png");
     background-size: cover;
 }
 
 [data-piece="king"][data-color="light"] {
-    background-image: url("img/king_light.png");
+    background-image: url("../img/king_light.png");
     background-size: cover;
 }
 
 [data-piece="king"][data-color="dark"] {
-    background-image: url("img/king_dark.png");
+    background-image: url("../img/king_dark.png");
     background-size: cover;
-}
-
-@media (max-width: 620px) {
-    .splash-buttons {
-        display: flex;
-        flex-direction: column;
-    }
 }
