@@ -950,6 +950,17 @@ function highlightCheckedKing(color) {
 }
 
 function initBoard() {
+    const fileLetters = {
+        1: "a",
+        2: "b",
+        3: "c",
+        4: "d",
+        5: "e",
+        6: "f",
+        7: "g",
+        8: "h"
+    }
+
     let boardColor = "dark";
 
     for (let i = 8; i > 0; i--) {
@@ -959,6 +970,38 @@ function initBoard() {
             cell.classList.add("cell", boardColor);
             cell.setAttribute("data-col", j);
             cell.setAttribute("data-row", i);
+
+            if (j === 8) {
+                const label = document.createElement("span");
+                label.style.position = "absolute";
+                label.style.right = 0;
+                label.style.top = 0;
+                label.style.margin = ".25em .5em";
+                label.style.fontSize = ".5rem";
+                if (i % 2 === 0) {
+                    label.style.color = "white";
+                } else {
+                    label.style.color = "black";
+                }
+                label.textContent = i;
+                cell.appendChild(label);
+            }
+
+            if (i === 1) {
+                const label = document.createElement("span");
+                label.style.position = "absolute";
+                label.style.left = 0;
+                label.style.bottom = 0;
+                label.style.margin = ".25em .5em";
+                label.style.fontSize = ".5rem";
+                if (j % 2 === 0) {
+                    label.style.color = "black";
+                } else {
+                    label.style.color = "white";
+                }
+                label.textContent = fileLetters[j];
+                cell.appendChild(label);
+            }
             
             const moveOverlay = document.createElement("div");
             moveOverlay.classList.add("move-overlay");

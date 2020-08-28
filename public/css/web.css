@@ -13,6 +13,31 @@ body {
     background-color: #0D0D0D; 
 }
 
+.home-link {
+    color: #F3F3F3;
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: #F3F3F3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: .5em 1em;
+    gap: .25em;
+}
+
+.home-link:hover,
+.home-link:active,
+.home-link:focus {
+    color: #962D3E;
+}
+
+.home-link .fas {
+    font-size: 1rem;
+}
+
 .info-text {
     grid-column: 1/-1;
     font-size: 2rem;
@@ -27,6 +52,7 @@ body {
     grid-row: 2/3;
     display: flex;
     flex-direction: column;
+    margin: 0 1rem;
 }
 
 .status .light {
@@ -115,6 +141,7 @@ body {
     display: flex;
     flex-direction: column;
     margin-left: auto;
+    margin: 0 1rem;
 }
 
 .chat-container .chat-output {
@@ -147,6 +174,7 @@ body {
 
 .input-container {
     position: relative;
+    width: 18vw;
 }
 
 .input-container .emoticons-button {
@@ -187,4 +215,56 @@ body {
 .emoticon {
     cursor: pointer;
     width: 10%;
+}
+
+@media (max-width: 1100px) {
+    .ready-button {
+        font-size: 1.5rem;
+    }
+
+    .info-text {
+        font-size: 1.5rem;
+    }
+
+    .status .player-name {
+        font-size: 1rem;
+    }
+
+    .status .status-text {
+        font-size: .75rem;
+    }
+
+    .chat-container .chat-output {
+        font-size: .75rem;
+    }
+
+    .chat-container .chat-input {
+        font-size: .75rem;
+    }
+}
+
+@media (max-width: 860px) {
+    .ready-button {
+        font-size: 1rem;
+    }
+
+    .info-text {
+        font-size: 1rem;
+    }
+
+    /* .status .player-name {
+        font-size: 1rem;
+    }
+
+    .status .status-text {
+        font-size: .75rem;
+    } */
+
+    .chat-container .chat-output {
+        font-size: .6rem;
+    }
+
+    .chat-container .chat-input {
+        font-size: .6rem;
+    }
 }

@@ -14,7 +14,11 @@
     <title>Chess ♟️</title>
 </head>
 <body>
-    <button class="ready-button"><span id="ready-button-text">Waiting for Opponent </span><i class="fas fa-spinner show"></i></button>
+    <a href="/" class="home-link">
+        <i class="fas fa-arrow-left"></i>
+        <span>Home</span>
+        <i class="fas fa-chess"></i>
+    </a>
     <div class="info-text"></div>
     <div class="chat-container">
         <textarea name="chat-output" id="chat-output" class="chat-output" disabled></textarea>
@@ -59,6 +63,8 @@
             <span class="status-text">Ready<i class="fas fa-times ready"></i></span></i>
         </div>
     </div>
-    <div class="grid-container"></div>
+    <div class="grid-container">
+        <button class="ready-button"><span id="ready-button-text">Waiting for Opponent </span><i class="fas fa-spinner show"></i></button>
+    </div>
 </body>
 </html>
