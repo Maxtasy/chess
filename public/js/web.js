@@ -27,6 +27,14 @@ soundMove.src = "../audio/Move.mp3";
 const soundCheckmate = new Audio();
 soundCheckmate.src = "../audio/Checkmate.mp3";
 
+const soundPlayerJoined = new Audio();
+soundPlayerJoined.src = "../audio/PlayerJoined.ogg";
+soundPlayerJoined.volume = .5;
+
+const soundMessageReceived = new Audio();
+soundMessageReceived.src = "../audio/MessageReceived.ogg";
+soundMessageReceived.volume = .5;
+
 let ACTIVE_CELL = null;
 let VALID_DESTINATIONS = null;
 let CLIENT_COLOR = null;
@@ -131,6 +139,9 @@ socket.on("player-connected", playerInfo => {
 
     GAME_INFO.players[playerInfo.color].connected = true;
 
+    soundPlayerJoined.currentTime = 0;
+    soundPlayerJoined.play();
+
     if (GAME_INFO.players[OPPONENT_COLOR].connected && !GAME_INFO.started) {
         readyButtonText.textContent = "Ready";
         readyButtonAnimation.classList.remove("show");
@@ -173,8 +184,9 @@ socket.on("executed-move", move => {
 
 socket.on("text-chat", textChatInfo => {
     chatOutput.value += `${textChatInfo.name}: ${textChatInfo.text}\n`;
-    chatInput.value = "";
     chatOutput.scrollTop = chatOutput.scrollHeight;
+    soundMessageReceived.currentTime = 0;
+    soundMessageReceived.play();
 });
 
 function clearHighlightedCells() {
@@ -1068,7 +1080,7 @@ function executeMove(destinationCell, wasOpponentMove) {
         infoText.textContent = `Stalemate`;
         GAME_INFO.over = true;
     } else {
-        infoText.textContent = `Current turn: ${GAME_INFO.currentPlayer}`;
+        infoText.textContent = `Current turn: ${GAME_INFO.players[GAME_INFO.currentPlayer].name} (${GAME_INFO.currentPlayer})`;
     }
 }
 

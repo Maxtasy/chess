@@ -1,4 +1,2 @@
-- Redirect if we connect to an already started game (specs can join as long as the game didnt start yet, preventing gameinfo fails, couls fix with doing all game stuff server side)
 - Pick piece when promoting (Add overlay with position absolute and disable any other clicks)
 - Stalemate condition (not enough pieces, threefold repetition)
-- Highlight last move
