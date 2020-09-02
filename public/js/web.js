@@ -1,14 +1,20 @@
-const gridContainer = document.querySelector(".grid-container");
+const nameInputForm = document.querySelector(".name-input-form");
+const gameContainer = document.querySelector(".game-container");
+const chessGridContainer = document.querySelector(".grid-container");
+const playernameContainer = document.querySelector(".playername-container");
 const infoText = document.querySelector(".info-text");
 const readyButton = document.querySelector(".ready-button");
 const readyButtonText = document.querySelector("#ready-button-text");
 const readyButtonAnimation = document.querySelector(".ready-button .fa-spinner");
-const lightPlayerName = document.querySelector(".status .light .player-name");
-const darkPlayerName = document.querySelector(".status .dark .player-name");
-const lightConnectedIcon = document.querySelector(".status .light .connected");
-const darkConnectedIcon = document.querySelector(".status .dark .connected");
-const lightReadyIcon = document.querySelector(".status .light .ready");
-const darkReadyIcon = document.querySelector(".status .dark .ready");
+const playerNames = {};
+playerNames["light"] = document.querySelector(".status-container .light .player-name");
+playerNames["dark"] = document.querySelector(".status-container .dark .player-name");
+const connectedIcons = {};
+connectedIcons["light"] = document.querySelector(".status-container .light .connected");
+connectedIcons["dark"] = document.querySelector(".status-container .dark .connected");
+const readyIcons = {};
+readyIcons["light"] = document.querySelector(".status-container .light .ready");
+readyIcons["dark"] = document.querySelector(".status-container .dark .ready");
 const chatInput = document.querySelector("#chat-input");
 const chatOutput = document.querySelector("#chat-output");
 const emoticonsButton = document.querySelector(".emoticons-button");
@@ -23,156 +29,138 @@ soundCheckmate.src = "../audio/Checkmate.mp3";
 
 let ACTIVE_CELL = null;
 let VALID_DESTINATIONS = null;
-let CURRENT_PLAYER = "light";
 let CLIENT_COLOR = null;
-let GAME_STARTED = false;
-let CLIENT_CONNECTED = false;
-let CLIENT_RDY = false;
-let OPPONENT_CONNECTED = false;
-let OPPONENT_RDY = false;
-let GAME_OVER = false;
+let OPPONENT_COLOR = null;
+let CLIENT_ID = null;
+let CLIENT_NAME = null;
 
-const players = {
-    light: {
-        moves: 0,
-        enPassant: null,
-        canCastleLong: true,
-        canCastleShort: true,
-    },
-    dark: {
-        moves: 0,
-        enPassant: null,
-        canCastleLong: true,
-        canCastleShort: true,
-    }
-}
+let GAME_INFO = {};
 
 const socket = io();
 
-socket.on("invalid-gameId", () => {
+socket.on("redirect-to-home", () => {
     window.location.href = `../`;
 });
 
-socket.on("game-info", gameInfo => {
-    if (gameInfo.game.started) {
-        window.location.href = `../`;
+socket.on("identify-client", () => {
+    CLIENT_ID = localStorage.getItem("clientId");
+    CLIENT_NAME = localStorage.getItem("clientName");
+    socket.emit("identify-client", {clientId: CLIENT_ID, clientName: CLIENT_NAME});
+});
+
+socket.on("client-id", clientId => {
+    CLIENT_ID = clientId;
+    localStorage.setItem("clientId", CLIENT_ID);
+});
+
+socket.on("update-client-game", gameInfo => {
+    GAME_INFO = gameInfo;
+    placePieces(GAME_INFO.boardState);
+    playernameContainer.classList.remove("show");
+    gameContainer.classList.add("show");
+    if (GAME_INFO.players.light.id === CLIENT_ID) {
+        CLIENT_COLOR = "light";
+        OPPONENT_COLOR = "dark";
+    } else if (GAME_INFO.players.dark.id === CLIENT_ID) {
+        CLIENT_COLOR = "dark";
+        OPPONENT_COLOR = "light";
+    } else if (!GAME_INFO.players.light.id) {
+        GAME_INFO.players.light.id = CLIENT_ID;
+        GAME_INFO.players.light.name = CLIENT_NAME;
+        CLIENT_COLOR = "light";
+        OPPONENT_COLOR = "dark";
+    } else if (!GAME_INFO.players.dark.id) {
+        GAME_INFO.players.dark.id = CLIENT_ID;
+        GAME_INFO.players.dark.name = CLIENT_NAME;
+        CLIENT_COLOR = "dark";
+        OPPONENT_COLOR = "light";
+    } else {
+        console.log("You joined spectators");
         return;
     }
 
-    console.log(`You connected as ${gameInfo.role}`);
-    infoText.textContent = `Invite a player by sending them the URL.`;
-
-    if (gameInfo.role === "light") {
-        CLIENT_CONNECTED = true;
-        CLIENT_COLOR = "light";
-        lightPlayerName.textContent = "Light (You)";
-        readyButton.classList.add("show");
-        lightConnectedIcon.classList.remove("fa-times");
-        lightConnectedIcon.classList.add("fa-check");
-
-        socket.emit("player-connected", "light");
-
-        if (gameInfo.game.players.dark.connected) {
-            OPPONENT_CONNECTED = true;
+    if (GAME_INFO.players[OPPONENT_COLOR].id) {
+        playerNames[OPPONENT_COLOR].textContent = GAME_INFO.players[OPPONENT_COLOR].name;
+        if (GAME_INFO.players[OPPONENT_COLOR].connected) {
+            connectedIcons[OPPONENT_COLOR].classList.remove("fa-times");
+            connectedIcons[OPPONENT_COLOR].classList.add("fa-check");
+        }
+        if (GAME_INFO.players[OPPONENT_COLOR].ready) {
+            readyIcons[OPPONENT_COLOR].classList.remove("fa-times");
+            readyIcons[OPPONENT_COLOR].classList.add("fa-check");
+        }
+        if (!GAME_INFO.started) {
             readyButtonText.textContent = "Ready";
             readyButtonAnimation.classList.remove("show");
-            infoText.textContent = `Ready up to start the game.`;
-        }
-        if (gameInfo.game.players.dark.ready) {
-            OPPONENT_RDY = true;
-        }
-    } else if (gameInfo.role === "dark") {
-        CLIENT_CONNECTED = true;
-        CLIENT_COLOR = "dark";
-        darkPlayerName.textContent = "Dark (You)";
-        readyButton.classList.add("show");
-        darkConnectedIcon.classList.remove("fa-times");
-        darkConnectedIcon.classList.add("fa-check");
-
-        socket.emit("player-connected", "dark");
-        if (gameInfo.game.players.light.connected) {
-            OPPONENT_CONNECTED = true;
-            readyButtonText.textContent = "Ready";
-            readyButtonAnimation.classList.remove("show");
-            infoText.textContent = `Ready up to start the game.`;
-        }
-        if (gameInfo.game.players.light.ready) {
-            OPPONENT_RDY = true;
+            readyButton.classList.add("show");
         }
     } else {
-        infoText.textContent = "You joined the spectators.";
+        readyButton.classList.add("show");
     }
 
-    if (gameInfo.game.players.dark.connected) {
-        darkConnectedIcon.classList.remove("fa-times");
-        darkConnectedIcon.classList.add("fa-check");
+    connectedIcons[CLIENT_COLOR].classList.remove("fa-times");
+    connectedIcons[CLIENT_COLOR].classList.add("fa-check");
+    playerNames[CLIENT_COLOR].textContent = CLIENT_NAME;
+    
+    if (GAME_INFO.players[CLIENT_COLOR].ready) {
+        readyIcons[CLIENT_COLOR].classList.remove("fa-times");
+        readyIcons[CLIENT_COLOR].classList.add("fa-check");
     }
-    if (gameInfo.game.players.dark.ready) {
-        darkReadyIcon.classList.remove("fa-times");
-        darkReadyIcon.classList.add("fa-check");
+
+    if (GAME_INFO.players[OPPONENT_COLOR].ready) {
+        readyIcons[OPPONENT_COLOR].classList.remove("fa-times");
+        readyIcons[OPPONENT_COLOR].classList.add("fa-check");
     }
-    if (gameInfo.game.players.light.connected) {
-        lightConnectedIcon.classList.remove("fa-times");
-        lightConnectedIcon.classList.add("fa-check");
+
+    if (GAME_INFO.players[OPPONENT_COLOR].connected) {
+        connectedIcons[OPPONENT_COLOR].classList.remove("fa-times");
+        connectedIcons[OPPONENT_COLOR].classList.add("fa-check");
     }
-    if (gameInfo.game.players.light.ready) {
-        lightReadyIcon.classList.remove("fa-times");
-        lightReadyIcon.classList.add("fa-check");
+
+    if (GAME_INFO.started) {
+        infoText.textContent = `Current turn: ${GAME_INFO.players[GAME_INFO.currentPlayer].name} (${GAME_INFO.currentPlayer})`;
     }
+
+    socket.emit("player-connected", CLIENT_COLOR);
 });
 
-socket.on("player-connected", color => {
-    if (color === "light") {
-        lightConnectedIcon.classList.remove("fa-times");
-        lightConnectedIcon.classList.add("fa-check");
-    } else if (color === "dark") {
-        darkConnectedIcon.classList.remove("fa-times");
-        darkConnectedIcon.classList.add("fa-check");
+socket.on("player-connected", playerInfo => {
+    connectedIcons[playerInfo.color].classList.remove("fa-times");
+    connectedIcons[playerInfo.color].classList.add("fa-check");
+    playerNames[playerInfo.color].textContent = playerInfo.name;
+
+    GAME_INFO.players[playerInfo.color].connected = true;
+
+    if (GAME_INFO.players[OPPONENT_COLOR].connected && !GAME_INFO.started) {
+        readyButtonText.textContent = "Ready";
+        readyButtonAnimation.classList.remove("show");
+        infoText.textContent = `Ready up to start the game.`;
     }
-    OPPONENT_CONNECTED = true;
-    readyButtonText.textContent = "Ready";
-    readyButtonAnimation.classList.remove("show");
-    infoText.textContent = `Ready up to start the game.`;
 });
 
 socket.on("player-disconnected", color => {
-    if (color === "light") {
-        lightConnectedIcon.classList.remove("fa-check");
-        lightConnectedIcon.classList.add("fa-times");
-    } else if (color === "dark") {
-        darkConnectedIcon.classList.remove("fa-check");
-        darkConnectedIcon.classList.add("fa-times");
-    }
-    if (GAME_OVER) {
+    connectedIcons[color].classList.remove("fa-check");
+    connectedIcons[color].classList.add("fa-times");
+
+    if (GAME_INFO.over) {
         return;
-    } else if (!GAME_OVER && GAME_STARTED) {
-        OPPONENT_CONNECTED = false;
-        GAME_OVER = true;
-        infoText.textContent = `Opponent left the match early, you win.`;
-    } else {
-        OPPONENT_CONNECTED = false;
-        readyButton.classList.add(".show");
+    } else if (!GAME_INFO.started) {
+        readyButton.classList.add("show");
         readyButtonAnimation.classList.add("show");
+        playerNames[color].textContent = color;
         readyButtonText.textContent = "Waiting for Opponent ";
         infoText.textContent = `Invite a player by sending them the URL.`;
     }
 });
 
 socket.on("player-ready", color => {
-    if (color === "light") {
-        lightReadyIcon.classList.remove("fa-times");
-        lightReadyIcon.classList.add("fa-check");
-    } else if (color === "dark") {
-        darkReadyIcon.classList.remove("fa-times");
-        darkReadyIcon.classList.add("fa-check");
-    }
-    OPPONENT_RDY = true;
+    readyIcons[color].classList.remove("fa-times");
+    readyIcons[color].classList.add("fa-check");
+    GAME_INFO.players[color].ready = true;
 
-    if (CLIENT_RDY && OPPONENT_RDY) {
-        GAME_STARTED = true;
-        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
-
-        socket.emit("game-started");
+    if (GAME_INFO.players.light.ready && GAME_INFO.players.dark.ready) {
+        GAME_INFO.started = true;
+        infoText.textContent = `Current turn: ${GAME_INFO.players[GAME_INFO.currentPlayer].name} (${GAME_INFO.currentPlayer})`;
     }
 });
 
@@ -184,7 +172,7 @@ socket.on("executed-move", move => {
 });
 
 socket.on("text-chat", textChatInfo => {
-    chatOutput.value += `${textChatInfo.color}: ${textChatInfo.text}\n`;
+    chatOutput.value += `${textChatInfo.name}: ${textChatInfo.text}\n`;
     chatInput.value = "";
     chatOutput.scrollTop = chatOutput.scrollHeight;
 });
@@ -509,11 +497,11 @@ function getValidDestinations(cell) {
             validDestinations.push(cellDiagRight);
         }
         // En Passant diagonally left
-        if (players.dark.enPassant === cellCol - 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagLeft)) {
+        if (GAME_INFO.players.dark.enPassant === cellCol - 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // En Passant diagonally right
-        if (players.dark.enPassant === cellCol + 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagRight)) {
+        if (GAME_INFO.players.dark.enPassant === cellCol + 1  && cellRow === 5 && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
     } else if (cellPiece === "pawn" && cellColor === "dark") {
@@ -538,11 +526,11 @@ function getValidDestinations(cell) {
             validDestinations.push(cellDiagRight);
         }
         // En Passant diagonally left
-        if (players.light.enPassant === cellCol - 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagLeft)) {
+        if (GAME_INFO.players.light.enPassant === cellCol - 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagLeft)) {
             validDestinations.push(cellDiagLeft);
         }
         // En Passant diagonally right
-        if (players.light.enPassant === cellCol + 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagRight)) {
+        if (GAME_INFO.players.light.enPassant === cellCol + 1  && cellRow === 4 && !selfCheckAfterMove(cell, cellDiagRight)) {
             validDestinations.push(cellDiagRight);
         }
     } else if (cellPiece === "knight") {
@@ -856,13 +844,13 @@ function getValidDestinations(cell) {
             }
         });
 
-        if (!isCheck(CURRENT_PLAYER)) {
+        if (!isCheck(GAME_INFO.currentPlayer)) {
             // Castle Short
     
             const cellRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 1}']`);
             const cellRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 2}']`);
             const cellRightRightRight = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol + 3}']`);
-            if (players[CURRENT_PLAYER].canCastleShort &&
+            if (GAME_INFO.players[GAME_INFO.currentPlayer].canCastleShort &&
                 !cellRight.dataset.piece &&
                 !cellRightRight.dataset.piece &&
                 !selfCheckAfterMove(cell, cellRight) &&
@@ -877,7 +865,7 @@ function getValidDestinations(cell) {
             const cellLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 2}']`);
             const cellLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 3}']`);
             const cellLeftLeftLeftLeft = document.querySelector(`[data-row='${cellRow}'][data-col='${cellCol - 4}']`);
-            if (players[CURRENT_PLAYER].canCastleLong &&
+            if (GAME_INFO.players[GAME_INFO.currentPlayer].canCastleLong &&
                 !cellLeft.dataset.piece &&
                 !cellLeftLeft.dataset.piece &&
                 !cellLeftLeftLeft.dataset.piece &&
@@ -904,85 +892,120 @@ function movePieceToNewDestination(cell) {
     // Promote
     if (activePiece === "pawn" && activeColor === "light" && destinationRow === 8) {
         cell.setAttribute("data-piece", "queen");
-        cell.setAttribute("data-color", "light");
+        cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = "queen";
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     } else if (activePiece === "pawn" && activeColor === "dark" && destinationRow === 1) {
         cell.setAttribute("data-piece", "queen");
-        cell.setAttribute("data-color", "dark");
+        cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = "queen";
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     // Enable En Passant if pawn moves 2 cells forward
     } else if (activePiece === "pawn" && activeColor === "light" && activeRow === 2 && destinationRow === 4) {
-        players.light.enPassant = activeCol;
+        GAME_INFO.players.light.enPassant = activeCol;
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     } else if (activePiece === "pawn" && activeColor === "dark" && activeRow === 7 && destinationRow === 5) {
-        players.dark.enPassant = activeCol;
+        GAME_INFO.players.dark.enPassant = activeCol;
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     // Light moved En Passant
     } else if (activePiece === "pawn" && activeColor === "light" && activeRow === 5 && destinationCol === players.dark.enPassant) {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
 
         const enPassantCell = document.querySelector(`[data-row='${activeRow}'][data-col='${destinationCol}']`);
         enPassantCell.removeAttribute("data-piece");
         enPassantCell.removeAttribute("data-color");
+        GAME_INFO.boardState[activeRow][destinationCol].piece = null;
+        GAME_INFO.boardState[activeRow][destinationCol].color = null;
     // Dark moved En Passant
     } else if (activePiece === "pawn" && activeColor === "dark" && activeRow === 4 && destinationCol === players.light.enPassant) {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
 
         const enPassantCell = document.querySelector(`[data-row='${activeRow}'][data-col='${destinationCol}']`);
         enPassantCell.removeAttribute("data-piece");
         enPassantCell.removeAttribute("data-color");
+        GAME_INFO.boardState[activeRow][destinationCol].piece = null;
+        GAME_INFO.boardState[activeRow][destinationCol].color = null;
     // Castle short
     } else if (activePiece === "king" && (destinationCol === activeCol + 2 || destinationCol === activeCol + 3)) {
         const newKingCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol + 2}']`);
         newKingCell.setAttribute("data-piece", activePiece);
         newKingCell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[activeRow][activeCol + 2].piece = activePiece;
+        GAME_INFO.boardState[activeRow][activeCol + 2].color = activeColor;
 
         const newRookCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol + 1}']`);
         newRookCell.setAttribute("data-piece", "rook");
         newRookCell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[activeRow][activeCol + 1].piece = "rook";
+        GAME_INFO.boardState[activeRow][activeCol + 1].color = activeColor;
 
         const oldRookCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol + 3}']`);
         oldRookCell.removeAttribute("data-piece");
         oldRookCell.removeAttribute("data-color");
+        GAME_INFO.boardState[activeRow][activeCol + 3].piece = null;
+        GAME_INFO.boardState[activeRow][activeCol + 3].color = null;
 
-        players[activeColor].canCastleLong = false;
-        players[activeColor].canCastleShort = false;
+        GAME_INFO.players[activeColor].canCastleLong = false;
+        GAME_INFO.players[activeColor].canCastleShort = false;
     // Castle long
     } else if (activePiece === "king" && (destinationCol === activeCol - 2 || destinationCol === activeCol - 4)) {
         const newKingCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol - 2}']`);
         newKingCell.setAttribute("data-piece", activePiece);
         newKingCell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[activeRow][activeCol - 2].piece = activePiece;
+        GAME_INFO.boardState[activeRow][activeCol - 2].color = activeColor;
 
         const newRookCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol - 1}']`);
         newRookCell.setAttribute("data-piece", "rook");
         newRookCell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[activeRow][activeCol - 1].piece = "rook";
+        GAME_INFO.boardState[activeRow][activeCol - 1].color = activeColor;
 
         const oldRookCell = document.querySelector(`[data-row='${activeRow}'][data-col='${activeCol - 4}']`);
         oldRookCell.removeAttribute("data-piece");
         oldRookCell.removeAttribute("data-color");
+        GAME_INFO.boardState[activeRow][activeCol - 4].piece = null;
+        GAME_INFO.boardState[activeRow][activeCol - 4].color = null;
 
-        players[activeColor].canCastleLong = false;
-        players[activeColor].canCastleShort = false;
+        GAME_INFO.players[activeColor].canCastleLong = false;
+        GAME_INFO.players[activeColor].canCastleShort = false;
     // Rook moved, disable this side's castle
     } else if (activePiece === "rook") {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
         if (activeCol === 1) {
-            players[activeColor].canCastleLong = false;
+            GAME_INFO.players[activeColor].canCastleLong = false;
         } else if (activeCol === 8) {
-            players[activeColor].canCastleShort = false;
+            GAME_INFO.players[activeColor].canCastleShort = false;
         }
     // King moved, disable castle
     }  else if (activePiece === "king") {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
-        players[activeColor].canCastleLong = false;
-        players[activeColor].canCastleShort = false;
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
+
+        GAME_INFO.players[activeColor].canCastleLong = false;
+        GAME_INFO.players[activeColor].canCastleShort = false;
     } else {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
+        GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
+        GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     }
 
     ACTIVE_CELL.classList.remove("active", "highlight");
@@ -994,6 +1017,8 @@ function movePieceToNewDestination(cell) {
 
     ACTIVE_CELL.removeAttribute("data-piece");
     ACTIVE_CELL.removeAttribute("data-color");
+    GAME_INFO.boardState[activeRow][activeCol].piece = null;
+    GAME_INFO.boardState[activeRow][activeCol].color = null;
     ACTIVE_CELL = null;
     clearHighlightedCells();
     setActiveCell(null);
@@ -1006,7 +1031,7 @@ function clearLastMoveHighlights() {
 }
 
 function executeMove(destinationCell, wasOpponentMove) {
-    clearCheckedKingHighlight(CURRENT_PLAYER);
+    clearCheckedKingHighlight(GAME_INFO.currentPlayer);
 
     if (!wasOpponentMove) {
         const active = {
@@ -1025,25 +1050,25 @@ function executeMove(destinationCell, wasOpponentMove) {
     }
 
     movePieceToNewDestination(destinationCell);
-    players[CURRENT_PLAYER].moves++;
-    CURRENT_PLAYER = (CURRENT_PLAYER === "light") ? "dark" : "light";
-    players[CURRENT_PLAYER].enPassant = null;
+
+    GAME_INFO.currentPlayer = (GAME_INFO.currentPlayer === "light") ? "dark" : "light";
+    GAME_INFO.players[GAME_INFO.currentPlayer].enPassant = null;
     soundMove.play();
     
-    if (isCheck(CURRENT_PLAYER)) {
-        highlightCheckedKing(CURRENT_PLAYER);
+    if (isCheck(GAME_INFO.currentPlayer)) {
+        highlightCheckedKing(GAME_INFO.currentPlayer);
     }
 
-    if (isCheckmate(CURRENT_PLAYER)) {
+    if (isCheckmate(GAME_INFO.currentPlayer)) {
         soundCheckmate.play();
-        infoText.textContent = `${CURRENT_PLAYER} is checkmate`;
-        GAME_OVER = true;
-    } else if (!isCheck(CURRENT_PLAYER) && !hasValidMoves(CURRENT_PLAYER)) {
+        infoText.textContent = `${GAME_INFO.currentPlayer} is checkmate`;
+        GAME_INFO.over = true;
+    } else if (!isCheck(GAME_INFO.currentPlayer) && !hasValidMoves(GAME_INFO.currentPlayer)) {
         soundCheckmate.play();
         infoText.textContent = `Stalemate`;
-        GAME_OVER = true;
+        GAME_INFO.over = true;
     } else {
-        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
+        infoText.textContent = `Current turn: ${GAME_INFO.currentPlayer}`;
     }
 }
 
@@ -1075,7 +1100,7 @@ function selfCheckAfterMove(activeCell, destinationCell) {
     activeCell.removeAttribute("data-color");
 
     // See if it results in self check
-    const result = isCheck(CURRENT_PLAYER);
+    const result = isCheck(GAME_INFO.currentPlayer);
 
     // Reset pieces
     activeCell.setAttribute("data-piece", activePiece);
@@ -1148,6 +1173,8 @@ function highlightCheckedKing(color) {
 }
 
 function initBoard() {
+    GAME_INFO["boardState"] = {};
+
     const fileLetters = {
         1: "a",
         2: "b",
@@ -1161,13 +1188,16 @@ function initBoard() {
 
     let boardColor = "dark";
 
-    for (let i = 8; i > 0; i--) {
+    for (let i = 8; i >= 1; i--) {
         boardColor = (boardColor === "light") ? "dark" : "light";
-        for (let j = 1; j < 9; j++) {
+        GAME_INFO.boardState[i] = {};
+
+        for (let j = 1; j <= 8; j++) {
+            GAME_INFO.boardState[i][j] = {};
             const cell = document.createElement("div");
-            cell.classList.add("cell", boardColor);
-            cell.setAttribute("data-col", j);
             cell.setAttribute("data-row", i);
+            cell.setAttribute("data-col", j);
+            cell.classList.add("cell", boardColor);
 
             if (j === 8) {
                 const label = document.createElement("span");
@@ -1211,71 +1241,58 @@ function initBoard() {
 
             cell.appendChild(takeOverlay);
 
-            let piece;
-            let color;
-
-            if (i <= 2 || i >= 7) {
-                if (i <= 2) {
-                    color = "light";
-                } else if (i >= 7) {
-                    color = "dark";
-                }
-
-                if (i === 2 || i === 7) {
-                    piece = "pawn";
-                } else if (j === 1 || j === 8 ) {
-                    piece = "rook";
-                } else if (j === 2 || j === 7) {
-                    piece = "knight";  
-                } else if (j === 3 || j === 6) {
-                    piece = "bishop";
-                } else if (j === 4) {
-                    piece = "queen";
-                } else {
-                    piece = "king";
-                }
-
-                cell.setAttribute("data-piece", piece);
-                cell.setAttribute("data-color", color);
-            }
-
             cell.addEventListener("click", (e) => {
-                if (CURRENT_PLAYER !== CLIENT_COLOR || !GAME_STARTED || GAME_OVER) return;
-                const clickedCell = e.target;
-
-                if (ACTIVE_CELL === clickedCell) {
-                    unselectPiece();
-                } else if (ACTIVE_CELL && VALID_DESTINATIONS.includes(clickedCell)) {
-                    if (!selfCheckAfterMove(ACTIVE_CELL, clickedCell)) {
-                        executeMove(clickedCell);
-                    }
-                } else if (clickedCell.dataset.color === CURRENT_PLAYER) {
-                    selectPiece(clickedCell);
-                }
+                const cell = e.target;
+                handleCellClick(cell);
             });
 
-            gridContainer.appendChild(cell);
+            chessGridContainer.appendChild(cell);
             
             boardColor = (boardColor === "light") ? "dark" : "light";
         }
     }
 }
 
-readyButton.addEventListener("click", () => {
-    if (!OPPONENT_CONNECTED) return;
-    socket.emit("client-ready", CLIENT_COLOR);
-    CLIENT_RDY = true;
-    if (CLIENT_COLOR === "light") {
-        lightReadyIcon.classList.remove("fa-times");
-        lightReadyIcon.classList.add("fa-check");
-    } else if (CLIENT_COLOR === "dark") {
-        darkReadyIcon.classList.remove("fa-times");
-        darkReadyIcon.classList.add("fa-check");
-    }
+function placePieces(boardState) {
+    Object.keys(boardState).forEach(row => {
+        Object.keys(boardState[row]).forEach(col => {
+            GAME_INFO.boardState[row][col].piece = boardState[row][col].piece;
+            GAME_INFO.boardState[row][col].color = boardState[row][col].color;
+            if (boardState[row][col].piece) {
+                document.querySelector(`[data-row='${row}'][data-col='${col}']`).setAttribute("data-piece", boardState[row][col].piece);
+                document.querySelector(`[data-row='${row}'][data-col='${col}']`).setAttribute("data-color", boardState[row][col].color);
+            }
+        });
+    });
+}
 
-    if (CLIENT_RDY && OPPONENT_RDY) {
-        GAME_STARTED = true;
-        infoText.textContent = `Current turn: ${CURRENT_PLAYER}`;
+function handleCellClick(cell) {
+    if (GAME_INFO.currentPlayer !== CLIENT_COLOR || !GAME_INFO.started || GAME_INFO.over) return;
+
+    if (ACTIVE_CELL === cell) {
+        unselectPiece();
+    } else if (ACTIVE_CELL && VALID_DESTINATIONS.includes(cell)) {
+        if (!selfCheckAfterMove(ACTIVE_CELL, cell)) {
+            executeMove(cell);
+            socket.emit("store-gamestate", GAME_INFO);
+        }
+    } else if (cell.dataset.color === GAME_INFO.currentPlayer) {
+        selectPiece(cell);
+    }
+}
+
+readyButton.addEventListener("click", () => {
+    if (!GAME_INFO.players[OPPONENT_COLOR].connected) return;
+
+    socket.emit("client-ready", CLIENT_COLOR);
+
+    GAME_INFO.players[CLIENT_COLOR].ready = true;
+    readyIcons[CLIENT_COLOR].classList.remove("fa-times");
+    readyIcons[CLIENT_COLOR].classList.add("fa-check");
+
+    if (GAME_INFO.players.light.ready && GAME_INFO.players.dark.ready) {
+        GAME_INFO.started = true;
+        infoText.textContent = `Current turn: ${GAME_INFO.players[GAME_INFO.currentPlayer].name} (${GAME_INFO.currentPlayer})`;
     } else {
         infoText.textContent = `Waiting for opponent to ready up.`;
     }
@@ -1288,12 +1305,12 @@ chatInput.addEventListener("keyup", e => {
     if (e.keyCode === 13) {
         const text = chatInput.value;
         if (!text) return;
-        chatOutput.value += `${CLIENT_COLOR} (You): ${text}\n`;
+        chatOutput.value += `${CLIENT_NAME}: ${text}\n`;
         chatInput.value = "";
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
         const textChatInfo = {
-            color: CLIENT_COLOR,
+            name: CLIENT_NAME,
             text: text
         }
         socket.emit("text-chat", textChatInfo);
@@ -1310,6 +1327,16 @@ emoticons.forEach(emoticon => {
         chatInput.focus();
         emoticonsDisplayContainer.classList.remove("show");
     });
+});
+
+nameInputForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = e.target.elements["name-input"].value;
+    if (name && name.length < 20) {
+        CLIENT_NAME = name;
+        localStorage.setItem("clientName", name);
+        socket.emit("identify-client", {clientId: CLIENT_ID, clientName: CLIENT_NAME});
+    }
 });
 
 initBoard();

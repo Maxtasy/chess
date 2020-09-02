@@ -19,52 +19,60 @@
         <span>Home</span>
         <i class="fas fa-chess"></i>
     </a>
-    <div class="info-text"></div>
-    <div class="chat-container">
-        <textarea name="chat-output" id="chat-output" class="chat-output" disabled></textarea>
-        <div class="input-container">
-            <div class="emoticons-display-container">
-                <span class="emoticon">🙂</span>
-                <span class="emoticon">😀</span>
-                <span class="emoticon">😉</span>
-                <span class="emoticon">😇</span>
-                <span class="emoticon">😍</span>
-                <span class="emoticon">😛</span>
-                <span class="emoticon">🤭</span>
-                <span class="emoticon">🤔</span>
-                <span class="emoticon">😐</span>
-                <span class="emoticon">🤥</span>
-                <span class="emoticon">🤢</span>
-                <span class="emoticon">🥵</span>
-                <span class="emoticon">🥴</span>
-                <span class="emoticon">😳</span>
-                <span class="emoticon">😈</span>
-                <span class="emoticon">💩</span>
-                <span class="emoticon">🤡</span>
-                <span class="emoticon">🔥</span>
-                <span class="emoticon">👍</span>
-                <span class="emoticon">🏆</span>
-                <span class="emoticon">♟️</span>
-                <span class="emoticon">🍺</span>
+    <div class="playername-container show">
+        <form action="" class="name-input-form">
+            <label for="name-input">Your Name</label>
+            <input type="text" name="name-input" id="name-input">
+        </form>
+    </div>
+    <div class="game-container">
+        <div class="info-text"></div>
+        <div class="chat-container">
+            <textarea name="chat-output" id="chat-output" class="chat-output" disabled></textarea>
+            <div class="input-container">
+                <div class="emoticons-display-container">
+                    <span class="emoticon">🙂</span>
+                    <span class="emoticon">😀</span>
+                    <span class="emoticon">😉</span>
+                    <span class="emoticon">😇</span>
+                    <span class="emoticon">😍</span>
+                    <span class="emoticon">😛</span>
+                    <span class="emoticon">🤭</span>
+                    <span class="emoticon">🤔</span>
+                    <span class="emoticon">😐</span>
+                    <span class="emoticon">🤥</span>
+                    <span class="emoticon">🤢</span>
+                    <span class="emoticon">🥵</span>
+                    <span class="emoticon">🥴</span>
+                    <span class="emoticon">😳</span>
+                    <span class="emoticon">😈</span>
+                    <span class="emoticon">💩</span>
+                    <span class="emoticon">🤡</span>
+                    <span class="emoticon">🔥</span>
+                    <span class="emoticon">👍</span>
+                    <span class="emoticon">🏆</span>
+                    <span class="emoticon">♟️</span>
+                    <span class="emoticon">🍺</span>
+                </div>
+                <input name="chat-input" id="chat-input" class="chat-input" type="text" placeholder="Write something...">
+                <button class="emoticons-button"><i class="far fa-smile"></i></button>
             </div>
-            <input name="chat-input" id="chat-input" class="chat-input" type="text" placeholder="Write something...">
-            <button class="emoticons-button"><i class="far fa-smile"></i></button>
         </div>
-    </div>
-    <div class="status">
-        <div class="dark">
-            <span class="player-name">Dark</span>
-            <span class="status-text">Connected<i class="fas fa-times connected"></i></span>
-            <span class="status-text">Ready<i class="fas fa-times ready"></i></span></i>
+        <div class="status-container">
+            <div class="dark">
+                <span class="player-name">Dark</span>
+                <span class="status-text">Connected<i class="fas fa-times connected"></i></span>
+                <span class="status-text">Ready<i class="fas fa-times ready"></i></span></i>
+            </div>
+            <div class="light">
+                <span class="player-name">Light</span>
+                <span class="status-text">Connected<i class="fas fa-times connected"></i></span>
+                <span class="status-text">Ready<i class="fas fa-times ready"></i></span></i>
+            </div>
         </div>
-        <div class="light">
-            <span class="player-name">Light</span>
-            <span class="status-text">Connected<i class="fas fa-times connected"></i></span>
-            <span class="status-text">Ready<i class="fas fa-times ready"></i></span></i>
+        <div class="grid-container">
+            <button class="ready-button"><span id="ready-button-text">Waiting for Opponent </span><i class="fas fa-spinner show"></i></button>
         </div>
-    </div>
-    <div class="grid-container">
-        <button class="ready-button"><span id="ready-button-text">Waiting for Opponent </span><i class="fas fa-spinner show"></i></button>
     </div>
 </body>
 </html>

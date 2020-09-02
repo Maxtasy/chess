@@ -4,8 +4,10 @@
     align-self: center;
     justify-self: center;
     box-sizing: initial;
-    width: 66vh;
-    height: 66vh;
+    width: 66vmin;
+    height: 66vmin;
+    /* width: 66vh;
+    height: 66vh; */
     background-color: grey;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
