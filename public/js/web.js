@@ -914,7 +914,7 @@ function movePieceToNewDestination(cell) {
         GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
         GAME_INFO.boardState[destinationRow][destinationCol].color = activeColor;
     // Light moved En Passant
-    } else if (activePiece === "pawn" && activeColor === "light" && activeRow === 5 && destinationCol === players.dark.enPassant) {
+    } else if (activePiece === "pawn" && activeColor === "light" && activeRow === 5 && destinationCol === GAME_INFO.players.dark.enPassant) {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
         GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
@@ -926,7 +926,7 @@ function movePieceToNewDestination(cell) {
         GAME_INFO.boardState[activeRow][destinationCol].piece = null;
         GAME_INFO.boardState[activeRow][destinationCol].color = null;
     // Dark moved En Passant
-    } else if (activePiece === "pawn" && activeColor === "dark" && activeRow === 4 && destinationCol === players.light.enPassant) {
+    } else if (activePiece === "pawn" && activeColor === "dark" && activeRow === 4 && destinationCol === GAME_INFO.players.light.enPassant) {
         cell.setAttribute("data-piece", activePiece);
         cell.setAttribute("data-color", activeColor);
         GAME_INFO.boardState[destinationRow][destinationCol].piece = activePiece;
